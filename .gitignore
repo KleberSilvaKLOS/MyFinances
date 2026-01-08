@@ -1,0 +1,11 @@
+﻿node_modules/
+.expo/
+android/build/
+android/app/build/
+android/.gradle/
+android/.cxx/
+android/.idea/
+android/*.iml
+*.log
+dist/
+web-build/
