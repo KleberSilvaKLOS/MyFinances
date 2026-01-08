@@ -1,11 +1,25 @@
-# 💰 MyFinance - Controle Financeiro Pessoall
+# 💰 MyFinance - Controle Financeiro Pessoal
 
-![Badge em Desenvolvimento](http://img.shields.io/static/v1?label=STATUS&EM%20DESENVOLVIMENTO&color=GREEN&style=for-the-badge)
+![Badge Versão](https://img.shields.io/badge/vers%C3%A3o-1.0.0-blue?style=for-the-badge)
+![Badge Status](http://img.shields.io/static/v1?label=STATUS&message=ESTÁVEL&color=GREEN&style=for-the-badge)
 ![Badge React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![Badge Expo](https://img.shields.io/badge/Expo-1B1F23?style=for-the-badge&logo=expo&logoColor=white)
 ![Badge TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 
 > Um aplicativo intuitivo e robusto para gestão completa de finanças pessoais, investimentos e contas fixas.
+
+## 🚀 Sobre a Versão 1.0 (MVP)
+
+Esta é a **primeira versão estável (v1.0)** do projeto MyFinance. O foco principal deste lançamento foi estabelecer uma base arquitetural sólida e um ambiente de desenvolvimento confiável.
+
+**Destaques desta versão:**
+* ✅ **Ambiente Estabilizado:** Configuração completa do Android NDK (v26) e Gradle, garantindo builds locais sem erros.
+* ✅ **Arquitetura Limpa:** Estrutura de pastas organizada e escalável para facilitar novas features.
+* ✅ **Navegação Híbrida:** Integração fluida entre `BottomTabNavigator` e `StackNavigator`.
+* ✅ **Sistema de Temas:** Suporte nativo a Light/Dark Mode via Context API.
+* ✅ **Repositório Otimizado:** Configuração fina de `.gitignore` para manter o projeto leve e performático.
+
+---
 
 ## 📱 Sobre o Projeto
 
@@ -48,11 +62,12 @@ O projeto utiliza as seguintes bibliotecas principais:
 
 - **Navegação:**
   - `@react-navigation/native`
-  - `@react-navigation/bottom-tabs` (Menu inferior)
+  - `@react-navigation/bottom-tabs` (Menu inferior customizado)
   - `@react-navigation/native-stack` (Navegação entre telas)
 
 - **Backend & Dados:**
   - `firebase` (Autenticação e Firestore Database)
+  - `@react-native-async-storage/async-storage` (Persistência local)
 
 - **Componentes Visuais & Funcionais:**
   - `expo-local-authentication` (Biometria)
@@ -65,13 +80,12 @@ O projeto utiliza as seguintes bibliotecas principais:
 A organização do código segue as melhores práticas de Clean Architecture adaptada para React Native:
 
 ```bash
-
 src/
   ├── @types/          # Definições de tipos globais (TypeScript)
   ├── assets/          # Imagens, ícones e fontes
   ├── components/      # Componentes reutilizáveis (Botões, Cards, Inputs)
   ├── config/          # Configurações externas (ex: Firebase config)
-  ├── context/         # Context API (Gerenciamento de estado global)
+  ├── context/         # Context API (Gerenciamento de estado global e Temas)
   ├── hooks/           # Custom Hooks (ex: useBiometrics, useAuth)
   ├── routes/          # Configuração de rotas (Stack e Tabs)
   ├── screens/         # Telas da aplicação
@@ -83,23 +97,23 @@ src/
   ├── services/        # Lógica de conexão com APIs e Firebase
   ├── theme/           # Arquivos de estilo global (Cores, Fontes)
   └── utils/           # Funções auxiliares e formatadores de moeda/data
-
 🚀 Como Rodar o Projeto
-Pré-requisitos: Você precisa ter o Node.js instalado, uma conta no Expo e o app Expo Go no seu celular (ou um emulador configurado).
+Pré-requisitos: Você precisa ter o Node.js instalado, uma conta no Expo e o app Expo Go no seu celular (ou um emulador Android/iOS configurado).
 
-1. Clone este repositório
+Clone este repositório
+
 Bash
 
-git clone [https://github.com/seu-usuario/account-control-app.git](https://github.com/seu-usuario/account-control-app.git)
-cd account-control-app
-2. Instale as dependências
+git clone [https://github.com/KleberSilvaKLOS/MyFinances.git](https://github.com/KleberSilvaKLOS/MyFinances.git)
+cd MyFinances
+Instale as dependências
+
 Bash
 
 npm install
 # ou
 yarn install
-3. Configuração do Firebase
-Crie um arquivo chamado firebase.ts dentro da pasta src/config/ e adicione as credenciais do seu projeto Firebase:
+Configuração do Firebase Crie um arquivo chamado firebase.ts dentro da pasta src/config/ e adicione as credenciais do seu projeto Firebase:
 
 TypeScript
 
@@ -117,12 +131,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export { app };
-4. Execute o projeto
+Execute o projeto
+
 Bash
 
 npx expo start
-5. Acesse no celular
-Escaneie o QR Code que aparecerá no terminal usando o app Expo Go (Android) ou o app Câmera (iOS).
+Acesse no celular Escaneie o QR Code que aparecerá no terminal usando o app Expo Go (Android) ou o app Câmera (iOS).
 
 🤝 Contribuição
 Contribuições são bem-vindas! Sinta-se à vontade para abrir issues ou enviar pull requests.
@@ -136,4 +150,3 @@ Faça o Commit (git commit -m 'Adicionando uma feature incrível')
 Faça o Push (git push origin feature/MinhaFeature)
 
 Abra um Pull Request
-
