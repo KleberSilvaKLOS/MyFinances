@@ -150,3 +150,43 @@ Faça o Commit (git commit -m 'Adicionando uma feature incrível')
 Faça o Push (git push origin feature/MinhaFeature)
 
 Abra um Pull Request
+
+````
+
+## Proposta para a porxima versão (1.0.1)
+
+### 1. Correções de Bugs (Prioridade Alta)
+
+- **Scroll na Aba de Lançamentos:**
+    - **Problema:** O último item da lista é cortado e o scroll não desce até o final.
+    - **Solução:** Ajustar o `contentContainerStyle` da `FlatList` ou `ScrollView` adicionando um `paddingBottom` extra para compensar a barra de navegação ou o final da tela.
+- **Tela de Recuperação de PIN (Layout):**
+    - **Problema:** Texto branco em fundo claro (falta de adaptação para modo claro/escuro nesta tela específica).
+    - **Solução:** Forçar a cor do texto para escuro ou implementar a detecção do tema (`Appearance` do React Native) para ajustar as cores dinamicamente.
+- **Tela de Recuperação de PIN (Lógica de Segurança):**
+    - **Problema:** O App diz que enviou o e-mail e já libera a troca do PIN sem validação. O e-mail não está chegando de fato.
+    - **Solução:**
+        1. Implementar o envio real do e-mail (provavelmente precisará de uma API/Backend para isso, já que o app é offline hoje, ou usar um serviço como EmailJS se for manter simples).
+        2. Bloquear a tela de "Novo PIN" até que o usuário insira um código de validação (OTP) recebido no e-mail.
+
+### 2. Melhorias de Usabilidade (UI/UX)
+
+- **Navegação por Gestos:**
+    - **Requisito:** Permitir arrastar o dedo (swipe) na tela para alternar entre as abas, além de clicar nos ícones inferiores.
+    - **Sugestão Técnica:** Utilizar uma biblioteca como `react-native-tab-view` ou configurar o `createMaterialTopTabNavigator` (do React Navigation) posicionado embaixo, que já possui suporte nativo a gestos de deslizar.
+- **Feedback de Atualização (Release Notes):**
+    - **Requisito:** Exibir um modal/popup na primeira vez que o usuário abrir o app após uma atualização, listando as novidades.
+    - **Sugestão Técnica:** Salvar a versão atual do app no `AsyncStorage`. Ao abrir, comparar a versão do código com a salva. Se for diferente (maior), exibir o modal e atualizar o storage.
+
+### 3. Funcionalidades (Features)
+
+- **Exportação para Excel:**
+    - **Requisito:** Gerar um arquivo `.xlsx` com todos os lançamentos do banco local.
+    - **Lógica:** Mapear as colunas do banco SQLite (Data, Descrição, Valor, Categoria) para células e usar uma biblioteca como `xlsx` ou `react-native-fs` para gerar e compartilhar o arquivo.
+
+### 4. Arquitetura e Futuro (Médio/Longo Prazo)
+
+- **Sincronização em Nuvem (Cloud):**
+    - **Objetivo:** Permitir acesso via Web (PC) e backup dos dados.
+    - **Mudança Necessária:** Migrar da lógica "Local First" (apenas SQLite no celular) para uma arquitetura com API e Banco de Dados remoto (PostgreSQL, Firebase, etc.).
+    - **Desafio:** Implementar lógica de autenticação (Login/Senha) e sincronização (enviar dados locais para a nuvem quando houver internet).
