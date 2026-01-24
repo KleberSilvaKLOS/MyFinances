@@ -151,7 +151,7 @@ Faça o Push (git push origin feature/MinhaFeature)
 
 Abra um Pull Request
 
-````
+```
 
 ## Proposta para a porxima versão (1.0.1)
 
@@ -190,3 +190,10 @@ Abra um Pull Request
     - **Objetivo:** Permitir acesso via Web (PC) e backup dos dados.
     - **Mudança Necessária:** Migrar da lógica "Local First" (apenas SQLite no celular) para uma arquitetura com API e Banco de Dados remoto (PostgreSQL, Firebase, etc.).
     - **Desafio:** Implementar lógica de autenticação (Login/Senha) e sincronização (enviar dados locais para a nuvem quando houver internet).
+--
+
+# Atualizando o APP My Finances
+
+- Para realizar a atualização do aplicativo, siga os seguintes passos:
+  **app.json** - Atualize a versão do aplicativo. Por exemplo, "version": 1.0.1 para 1.0.2. para sempre dar certo as atualizoes. Recomendo que deixe para atualizar por ultimo, depois de todos os testes.
+  **atualizando pasta android** - Para que a build apk do android studio funcione, rode no terminal. dentro da pasta do projeto o seguinte comando "npx expo prebuild --platform android". Com esse comando ele atualiza a pasta android, consequentemente deixando tudo atualizado. Recomendavel realizar a branch depois desse comando.
