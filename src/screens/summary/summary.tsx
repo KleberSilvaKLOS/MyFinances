@@ -262,43 +262,243 @@ export default function SummaryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 },
-  header: { padding: 20, paddingBottom: 30, borderBottomLeftRadius: 30, borderBottomRightRadius: 30, alignItems: 'center', marginBottom: 10, elevation: 5 },
-  headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 10 },
-  headerRightActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  btnEyeHeader: { padding: 5 },
-  btnAddHeader: { backgroundColor: '#fff', width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { color: '#ffffffaa', fontSize: 14, fontWeight: 'bold', textTransform: 'uppercase' },
-  labelBalance: { color: '#e2e8f0', fontSize: 12 },
-  valueBalance: { color: '#fff', fontSize: 32, fontWeight: 'bold', marginTop: 5 },
-  filterBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 20, marginTop: -25, borderRadius: 15, padding: 10, elevation: 4, marginBottom: 10 },
-  dateSelector: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  dateBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, gap: 5 },
-  dateText: { fontWeight: '600', fontSize: 12 },
-  dateSeparator: { fontSize: 12 },
-  shortcutBtn: { backgroundColor: '#3870d8', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
-  shortcutText: { color: '#fff', fontSize: 11, fontWeight: 'bold' },
-  content: { flex: 1, paddingHorizontal: 20 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, marginTop: 5 },
-  chartContainer: { alignItems: 'center', justifyContent: 'center', marginBottom: 10, position: 'relative', height: 220 },
-  donutHole: { position: 'absolute', width: 90, height: 90, borderRadius: 45, left: (screenWidth/2) - 138, justifyContent: 'center', alignItems: 'center', elevation: 2 },
-  donutLabel: { color: '#64748b', fontSize: 9, fontWeight: 'bold' },
-  donutValue: { color: '#3870d8', fontSize: 13, fontWeight: 'bold' },
-  emptyContainer: { height: 100, justifyContent: 'center', alignItems: 'center', borderRadius: 15, marginBottom: 20, borderWidth: 1 },
-  itemCard: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, marginBottom: 10, borderWidth: 1, elevation: 1 },
-  rankBadge: { width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
-  rankText: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
-  itemInfo: { flex: 1, marginRight: 10 },
-  itemTitle: { fontSize: 15, fontWeight: '600', marginBottom: 6 },
-  progressBarBackground: { height: 4, borderRadius: 2, width: '100%' },
-  progressBarFill: { height: '100%', borderRadius: 2 },
-  itemValue: { fontSize: 14, fontWeight: 'bold', color: '#ef4444' },
-  itemPercent: { fontSize: 11, color: '#94a3b8', textAlign: 'right' },
-  modalOverlay: { flex: 1, flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.5)' },
-  modalBackdrop: { flex: 1 },
-  sideMenu: { width: '80%', padding: 25, borderTopLeftRadius: 20, borderBottomLeftRadius: 20, elevation: 10, marginLeft:'auto' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30, borderBottomWidth: 1, paddingBottom: 10 },
-  modalTitle: { fontSize: 20, fontWeight: 'bold' },
-  btnDelete: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20 },
-  btnDeleteText: { color: '#ef4444', fontWeight: '600', fontSize: 14 }
+  // --- ESTRUTURA GLOBAL ---
+  container: { 
+    flex: 1, 
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 
+  },
+  content: { 
+    flex: 1, 
+    paddingHorizontal: 20 
+  },
+  sectionTitle: { 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    marginBottom: 10, 
+    marginTop: 5 
+  },
+
+  // --- CABEÇALHO (HEADER) ---
+  header: { 
+    padding: 20, 
+    paddingBottom: 30, 
+    borderBottomLeftRadius: 30, 
+    borderBottomRightRadius: 30, 
+    alignItems: 'center', 
+    marginBottom: 10, 
+    elevation: 5 
+  },
+  headerTopRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    width: '100%', 
+    marginBottom: 10 
+  },
+  headerTitle: { 
+    color: '#ffffffaa', 
+    fontSize: 14, 
+    fontWeight: 'bold', 
+    textTransform: 'uppercase' 
+  },
+  headerRightActions: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 12 
+  },
+  btnEyeHeader: { 
+    padding: 5 
+  },
+  btnAddHeader: { 
+    backgroundColor: '#fff', 
+    width: 40, 
+    height: 40, 
+    borderRadius: 20, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  labelBalance: { 
+    color: '#e2e8f0', 
+    fontSize: 12 
+  },
+  valueBalance: { 
+    color: '#fff', 
+    fontSize: 32, 
+    fontWeight: 'bold', 
+    marginTop: 5 
+  },
+
+  // --- BARRA DE FILTRO (DATE SELECTOR) ---
+  filterBar: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginHorizontal: 20, 
+    marginTop: -25, 
+    borderRadius: 15, 
+    padding: 10, 
+    elevation: 4, 
+    marginBottom: 10 
+  },
+  dateSelector: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 8 
+  },
+  dateBtn: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingHorizontal: 10, 
+    paddingVertical: 6, 
+    borderRadius: 8, 
+    gap: 5 
+  },
+  dateText: { 
+    fontWeight: '600', 
+    fontSize: 12 
+  },
+  dateSeparator: { 
+    fontSize: 12 
+  },
+  shortcutBtn: { 
+    backgroundColor: '#3870d8', 
+    paddingHorizontal: 12, 
+    paddingVertical: 6, 
+    borderRadius: 8 
+  },
+  shortcutText: { 
+    color: '#fff', 
+    fontSize: 11, 
+    fontWeight: 'bold' 
+  },
+
+  // --- GRÁFICO DONUT ---
+  chartContainer: { 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    marginBottom: 10, 
+    position: 'relative', 
+    height: 220 
+  },
+  donutHole: { 
+    position: 'absolute', 
+    width: 90, 
+    height: 90, 
+    borderRadius: 45, 
+    left: (screenWidth / 2) - 138, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    elevation: 2 
+  },
+  donutLabel: { 
+    color: '#64748b', 
+    fontSize: 9, 
+    fontWeight: 'bold' 
+  },
+  donutValue: { 
+    color: '#3870d8', 
+    fontSize: 13, 
+    fontWeight: 'bold' 
+  },
+
+  // --- LISTAGEM E RANKING (ITENS) ---
+  emptyContainer: { 
+    height: 100, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    borderRadius: 15, 
+    marginBottom: 20, 
+    borderWidth: 1 
+  },
+  itemCard: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    padding: 12, 
+    borderRadius: 12, 
+    marginBottom: 10, 
+    borderWidth: 1, 
+    elevation: 1 
+  },
+  rankBadge: { 
+    width: 28, 
+    height: 28, 
+    borderRadius: 14, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginRight: 10 
+  },
+  rankText: { 
+    color: '#fff', 
+    fontWeight: 'bold', 
+    fontSize: 12 
+  },
+  itemInfo: { 
+    flex: 1, 
+    marginRight: 10 
+  },
+  itemTitle: { 
+    fontSize: 15, 
+    fontWeight: '600', 
+    marginBottom: 6 
+  },
+  progressBarBackground: { 
+    height: 4, 
+    borderRadius: 2, 
+    width: '100%' 
+  },
+  progressBarFill: { 
+    height: '100%', 
+    borderRadius: 2 
+  },
+  itemValue: { 
+    fontSize: 14, 
+    fontWeight: 'bold', 
+    color: '#ef4444' 
+  },
+  itemPercent: { 
+    fontSize: 11, 
+    color: '#94a3b8', 
+    textAlign: 'right' 
+  },
+
+  // --- MODAL / SIDE MENU ---
+  modalOverlay: { 
+    flex: 1, 
+    flexDirection: 'row', 
+    backgroundColor: 'rgba(0,0,0,0.5)' 
+  },
+  modalBackdrop: { 
+    flex: 1 
+  },
+  sideMenu: { 
+    width: '80%', 
+    padding: 25, 
+    borderTopLeftRadius: 20, 
+    borderBottomLeftRadius: 20, 
+    elevation: 10, 
+    marginLeft: 'auto' 
+  },
+  modalHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: 30, 
+    borderBottomWidth: 1, 
+    paddingBottom: 10 
+  },
+  modalTitle: { 
+    fontSize: 20, 
+    fontWeight: 'bold' 
+  },
+  btnDelete: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 8, 
+    marginTop: 20 
+  },
+  btnDeleteText: { 
+    color: '#ef4444', 
+    fontWeight: '600', 
+    fontSize: 14 
+  }
 });

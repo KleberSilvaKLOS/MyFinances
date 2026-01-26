@@ -217,39 +217,197 @@ export default function InvestmentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 },
-  header: { padding: 20, paddingBottom: 30, borderBottomLeftRadius: 30, borderBottomRightRadius: 30, alignItems: 'center', position: 'relative' },
-  headerTitle: { color: '#ffffffaa', fontSize: 12, textTransform: 'uppercase', marginBottom: 10 },
-  labelTotal: { color: '#e2e8f0', fontSize: 14 },
-  valueTotal: { color: '#fff', fontSize: 32, fontWeight: 'bold', marginTop: 5 },
-  summaryRow: { marginTop: 15 },
-  badge: { backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 20, alignItems: 'center' },
-  badgeLabel: { color: '#e2e8f0', fontSize: 10 },
-  badgeValue: { fontSize: 14, fontWeight: 'bold' },
-  headerRightActions: { position: 'absolute', top: 20, right: 20, flexDirection: 'row', alignItems: 'center', gap: 15 },
-  eyeBtn: { padding: 5 },
-  btnAdd: { backgroundColor: '#fff', width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-  content: { flex: 1, padding: 20 },
-  emptyText: { textAlign: 'center', marginTop: 50 },
-  card: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 15, borderRadius: 15, marginBottom: 12, elevation: 2, borderWidth: 1 },
-  cardLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  iconBox: { width: 45, height: 45, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-  cardTitle: { fontSize: 16, fontWeight: 'bold' },
-  cardSubtitle: { fontSize: 12 },
-  cardRight: { alignItems: 'flex-end' },
-  cardValue: { fontSize: 16, fontWeight: 'bold' },
-  profitText: { fontSize: 11, fontWeight: 'bold' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
-  modalBackdrop: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 },
-  modalContent: { borderRadius: 20, padding: 25 },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 20 },
-  label: { marginBottom: 5, fontSize: 12, fontWeight: 'bold' },
-  input: { padding: 12, borderRadius: 10, fontSize: 16, marginBottom: 15 },
-  typeRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-  typeBtn: { flex: 1, padding: 10, borderRadius: 8, alignItems: 'center' },
-  typeBtnActive: { backgroundColor: '#3870d8' },
-  typeText: { color: '#64748b', fontSize: 12, fontWeight: 'bold' },
-  typeTextActive: { color: '#fff' },
-  btnSave: { backgroundColor: '#3870d8', padding: 15, borderRadius: 12, alignItems: 'center' },
-  btnSaveText: { color: '#fff', fontWeight: 'bold' }
+  // --- ESTRUTURA GERAL ---
+  container: { 
+    flex: 1, 
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 
+  },
+  content: { 
+    flex: 1, 
+    padding: 20 
+  },
+  emptyText: { 
+    textAlign: 'center', 
+    marginTop: 50 
+  },
+
+  // --- CABEÇALHO (PATRIMÔNIO TOTAL) ---
+  header: { 
+    padding: 20, 
+    paddingBottom: 30, 
+    borderBottomLeftRadius: 30, 
+    borderBottomRightRadius: 30, 
+    alignItems: 'center', 
+    position: 'relative' 
+  },
+  headerTitle: { 
+    color: '#ffffffaa', 
+    fontSize: 12, 
+    textTransform: 'uppercase', 
+    marginBottom: 10 
+  },
+  labelTotal: { 
+    color: '#e2e8f0', 
+    fontSize: 14 
+  },
+  valueTotal: { 
+    color: '#fff', 
+    fontSize: 32, 
+    fontWeight: 'bold', 
+    marginTop: 5 
+  },
+
+  // --- BADGE DE RENDIMENTO ---
+  summaryRow: { 
+    marginTop: 15 
+  },
+  badge: { 
+    backgroundColor: 'rgba(255,255,255,0.15)', 
+    paddingHorizontal: 15, 
+    paddingVertical: 8, 
+    borderRadius: 20, 
+    alignItems: 'center' 
+  },
+  badgeLabel: { 
+    color: '#e2e8f0', 
+    fontSize: 10 
+  },
+  badgeValue: { 
+    fontSize: 14, 
+    fontWeight: 'bold' 
+  },
+
+  // --- AÇÕES DO HEADER ---
+  headerRightActions: { 
+    position: 'absolute', 
+    top: 20, 
+    right: 20, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 15 
+  },
+  eyeBtn: { 
+    padding: 5 
+  },
+  btnAdd: { 
+    backgroundColor: '#fff', 
+    width: 40, 
+    height: 40, 
+    borderRadius: 20, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+
+  // --- CARDS DE INVESTIMENTO ---
+  card: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    padding: 15, 
+    borderRadius: 15, 
+    marginBottom: 12, 
+    elevation: 2, 
+    borderWidth: 1 
+  },
+  cardLeft: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 12 
+  },
+  iconBox: { 
+    width: 45, 
+    height: 45, 
+    borderRadius: 12, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  cardTitle: { 
+    fontSize: 16, 
+    fontWeight: 'bold' 
+  },
+  cardSubtitle: { 
+    fontSize: 12 
+  },
+  cardRight: { 
+    alignItems: 'flex-end' 
+  },
+  cardValue: { 
+    fontSize: 16, 
+    fontWeight: 'bold' 
+  },
+  profitText: { 
+    fontSize: 11, 
+    fontWeight: 'bold' 
+  },
+
+  // --- MODAL E FORMULÁRIO ---
+  modalOverlay: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.5)', 
+    justifyContent: 'center', 
+    padding: 20 
+  },
+  modalBackdrop: { 
+    position: 'absolute', 
+    top: 0, 
+    bottom: 0, 
+    left: 0, 
+    right: 0 
+  },
+  modalContent: { 
+    borderRadius: 20, 
+    padding: 25 
+  },
+  modalTitle: { 
+    fontSize: 20, 
+    fontWeight: 'bold', 
+    marginBottom: 20 
+  },
+  label: { 
+    marginBottom: 5, 
+    fontSize: 12, 
+    fontWeight: 'bold' 
+  },
+  input: { 
+    padding: 12, 
+    borderRadius: 10, 
+    fontSize: 16, 
+    marginBottom: 15 
+  },
+
+  // --- SELETOR DE TIPO (FIXA/VARIÁVEL/CRIPTO) ---
+  typeRow: { 
+    flexDirection: 'row', 
+    gap: 10, 
+    marginBottom: 20 
+  },
+  typeBtn: { 
+    flex: 1, 
+    padding: 10, 
+    borderRadius: 8, 
+    alignItems: 'center' 
+  },
+  typeBtnActive: { 
+    backgroundColor: '#3870d8' 
+  },
+  typeText: { 
+    color: '#64748b', 
+    fontSize: 12, 
+    fontWeight: 'bold' 
+  },
+  typeTextActive: { 
+    color: '#fff' 
+  },
+
+  // --- BOTÃO SALVAR ---
+  btnSave: { 
+    backgroundColor: '#3870d8', 
+    padding: 15, 
+    borderRadius: 12, 
+    alignItems: 'center' 
+  },
+  btnSaveText: { 
+    color: '#fff', 
+    fontWeight: 'bold' 
+  }
 });
