@@ -53,6 +53,7 @@ const styles = StyleSheet.create({
 // COMPONENTE DA BARRA DE NAVEGAÇÃO INFERIOR
 function TabNavigator() {
   const { isDark } = useTheme(); // Hook do tema para verificar se é modo escuro
+  const insets = useSafeAreaInsets(); // Hook para obter os insets da área segura (notch, etc.)
 
   return (
     <Tab.Navigator
@@ -63,20 +64,22 @@ function TabNavigator() {
         // Estilização da barra flutuante (arredondada e descolada do fundo)
         tabBarStyle: {
           position: 'absolute',
-          bottom: - 3, // Ajuste de posição vertical
+          bottom: - 1 + insets.bottom, // Ajuste de posição vertical
           left: 20,
           right: 20,
           elevation: 5,
           backgroundColor: isDark ? '#1e293b' : '#ffffff', // COR DINÂMICA baseada no tema
-          borderRadius: 20,
-          height: 70,
+          borderRadius: 2,
+          height: 50,
+          
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 5 },
           shadowOpacity: 0.1,
           shadowRadius: 3.5,
           borderTopWidth: 0,
-          marginBottom: 10,
-        },
+          marginBottom: 0,
+          
+          },
       }}
     >
       {/* TELA DE GASTOS */}
