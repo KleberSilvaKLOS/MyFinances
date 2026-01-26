@@ -6,6 +6,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Platform } from 'react-native';
 
 // IMPORTAÇÃO DO TEMA (Contexto para gerenciar Dark/Light mode)
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
@@ -61,7 +63,7 @@ function TabNavigator() {
         // Estilização da barra flutuante (arredondada e descolada do fundo)
         tabBarStyle: {
           position: 'absolute',
-          bottom: - 30, // Ajuste de posição vertical
+          bottom: - 3, // Ajuste de posição vertical
           left: 20,
           right: 20,
           elevation: 5,
