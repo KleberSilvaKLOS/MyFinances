@@ -258,9 +258,10 @@ const styles = StyleSheet.create({
   },
 
   // --- CABEÇALHO (HEADER) ---
+
   header: { 
     padding: 25, 
-    paddingBottom: 40, 
+    paddingBottom: 30, 
     borderBottomLeftRadius: 30, 
     borderBottomRightRadius: 30 
   },
@@ -268,7 +269,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', 
     justifyContent: 'space-between', 
     alignItems: 'center', 
-    marginBottom: 15 
+    marginBottom: 0 
   },
   greeting: { 
     color: '#ffffffaa', 
