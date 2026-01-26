@@ -283,23 +283,21 @@ const styles = StyleSheet.create({
     padding: 20, 
     paddingBottom: 30, 
     borderBottomLeftRadius: 30, 
-    borderBottomRightRadius: 30, 
-    alignItems: 'center', 
-    marginBottom: 10, 
-    elevation: 5 
-  },
+    borderBottomRightRadius: 30,
+    },
   headerTopRow: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
     alignItems: 'center', 
-    width: '100%', 
-    marginBottom: 10 
+    marginBottom: 0
+     
   },
   headerTitle: { 
     color: '#ffffffaa', 
     fontSize: 14, 
-    fontWeight: 'bold', 
-    textTransform: 'uppercase' 
+    // fontWeight: 'bold',
+    paddingBottom: -4,
+    // textTransform: 'uppercase' 
   },
   headerRightActions: { 
     flexDirection: 'row', 
@@ -310,20 +308,21 @@ const styles = StyleSheet.create({
     padding: 5 
   },
   btnAddHeader: { 
-    backgroundColor: '#fff', 
-    width: 40, 
-    height: 40, 
-    borderRadius: 20, 
+    backgroundColor: '#ffffff74', 
+    width: 42, 
+    height: 42, 
+    borderRadius: 21, 
     justifyContent: 'center', 
     alignItems: 'center' 
   },
   labelBalance: { 
-    color: '#e2e8f0', 
-    fontSize: 12 
+    color: '#ffffff', 
+    fontSize: 16,
+    fontWeight: '600',
   },
   valueBalance: { 
     color: '#fff', 
-    fontSize: 32, 
+    fontSize: 36, 
     fontWeight: 'bold', 
     marginTop: 5 
   },

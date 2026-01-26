@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
   // --- CABEÇALHO (HEADER) ---
 
   header: { 
-    padding: 25, 
+    padding: 20, 
     paddingBottom: 30, 
     borderBottomLeftRadius: 30, 
     borderBottomRightRadius: 30 
@@ -355,12 +355,17 @@ const styles = StyleSheet.create({
   actionsContainer: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
-    paddingHorizontal: 20, 
-    marginTop: -25 
+    paddingHorizontal: 20,
+    paddingVertical: 0, 
+    marginTop: -25,
+    borderRadius: 8,
+    padding: 1,
+    marginBottom: 0,
+    height: 55,
   },
   actionBtn: { 
     flex: 0.48, 
-    borderRadius: 20, 
+    borderRadius: 15, 
     padding: 15, 
     alignItems: 'center', 
     flexDirection: 'row', 
