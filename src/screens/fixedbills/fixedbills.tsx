@@ -255,40 +255,216 @@ export default function FixedBillsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 },
-  header: { padding: 20, paddingBottom: 25, borderBottomLeftRadius: 30, borderBottomRightRadius: 30, elevation: 5 },
-  headerTop: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', position: 'relative', marginBottom: 15 },
-  headerTitle: { color: '#ffffffaa', fontSize: 14, fontWeight: 'bold', textTransform: 'uppercase' },
-  headerRightActions: { position: 'absolute', right: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  btnEyeHeader: { padding: 5 },
-  btnAdd: { backgroundColor: '#fff', width: 35, height: 35, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
-  totalContainer: { alignItems: 'center', marginBottom: 15 },
-  totalLabel: { color: '#e2e8f0', fontSize: 12, marginBottom: 2 },
-  totalValue: { color: '#fff', fontSize: 36, fontWeight: 'bold' },
-  dateFilter: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 15, backgroundColor: 'rgba(255, 255, 255, 0.15)', paddingVertical: 8, paddingHorizontal: 15, borderRadius: 20, alignSelf: 'center' },
-  dateText: { color: '#fff', fontSize: 16, fontWeight: 'bold', minWidth: 120, textAlign: 'center' },
-  arrowBtn: { padding: 2 },
-  content: { flex: 1, padding: 20 },
-  emptyState: { alignItems: 'center', marginTop: 50 },
-  emptyText: { color: '#94a3b8', fontSize: 16 },
-  card: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 15, borderRadius: 15, marginBottom: 12, elevation: 2 },
-  cardLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  iconBox: { width: 45, height: 45, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-  cardTitle: { fontSize: 16, fontWeight: 'bold' },
-  cardDate: { fontSize: 12 },
-  cardRight: { alignItems: 'flex-end', gap: 5 },
-  cardValue: { fontSize: 16, fontWeight: 'bold' },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
-  statusText: { color: '#fff', fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
-  modalBackdrop: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 },
-  modalContent: { borderRadius: 20, padding: 25, elevation: 10 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  modalTitle: { fontSize: 20, fontWeight: 'bold' },
-  label: { marginBottom: 5, fontWeight: '600' },
-  input: { padding: 12, borderRadius: 10, fontSize: 16, marginBottom: 15 },
-  btnSave: { backgroundColor: '#3870d8', padding: 15, borderRadius: 12, alignItems: 'center', marginTop: 10 },
-  btnSaveText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  btnDelete: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 20, gap: 5 },
-  btnDeleteText: { color: '#ef4444', fontWeight: '600' }
+  // --- ESTRUTURA GLOBAL ---
+  container: { 
+    flex: 1, 
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 
+  },
+  content: { 
+    flex: 1, 
+    padding: 20 
+  },
+
+  // --- CABEÇALHO (HEADER) ---
+  header: { 
+    padding: 20, 
+    paddingBottom: 25, 
+    borderBottomLeftRadius: 30, 
+    borderBottomRightRadius: 30, 
+    elevation: 5 
+  },
+  headerTop: { 
+    flexDirection: 'row', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    position: 'relative', 
+    marginBottom: 15 
+  },
+  headerTitle: { 
+    color: '#ffffffaa', 
+    fontSize: 14, 
+    fontWeight: 'bold', 
+    textTransform: 'uppercase' 
+  },
+  headerRightActions: { 
+    position: 'absolute', 
+    right: 0, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 12 
+  },
+  btnEyeHeader: { 
+    padding: 5 
+  },
+  btnAdd: { 
+    backgroundColor: '#fff', 
+    width: 35, 
+    height: 35, 
+    borderRadius: 18, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+
+  // --- RESUMO DE VALORES (TOTALIZADOR) ---
+  totalContainer: { 
+    alignItems: 'center', 
+    marginBottom: 15 
+  },
+  totalLabel: { 
+    color: '#e2e8f0', 
+    fontSize: 12, 
+    marginBottom: 2 
+  },
+  totalValue: { 
+    color: '#fff', 
+    fontSize: 36, 
+    fontWeight: 'bold' 
+  },
+
+  // --- FILTRO DE DATA ---
+  dateFilter: { 
+    flexDirection: 'row', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    gap: 15, 
+    backgroundColor: 'rgba(255, 255, 255, 0.15)', 
+    paddingVertical: 8, 
+    paddingHorizontal: 15, 
+    borderRadius: 20, 
+    alignSelf: 'center' 
+  },
+  dateText: { 
+    color: '#fff', 
+    fontSize: 16, 
+    fontWeight: 'bold', 
+    minWidth: 120, 
+    textAlign: 'center' 
+  },
+  arrowBtn: { 
+    padding: 2 
+  },
+
+  // --- LISTAGEM E CARDS (ITENS) ---
+  card: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    padding: 15, 
+    borderRadius: 15, 
+    marginBottom: 12, 
+    elevation: 2 
+  },
+  cardLeft: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 12 
+  },
+  iconBox: { 
+    width: 45, 
+    height: 45, 
+    borderRadius: 12, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  cardTitle: { 
+    fontSize: 16, 
+    fontWeight: 'bold' 
+  },
+  cardDate: { 
+    fontSize: 12 
+  },
+  cardRight: { 
+    alignItems: 'flex-end', 
+    gap: 5 
+  },
+  cardValue: { 
+    fontSize: 16, 
+    fontWeight: 'bold' 
+  },
+  statusBadge: { 
+    paddingHorizontal: 8, 
+    paddingVertical: 2, 
+    borderRadius: 10 
+  },
+  statusText: { 
+    color: '#fff', 
+    fontSize: 10, 
+    fontWeight: 'bold', 
+    textTransform: 'uppercase' 
+  },
+
+  // --- ESTADOS VAZIOS (EMPTY STATE) ---
+  emptyState: { 
+    alignItems: 'center', 
+    marginTop: 50 
+  },
+  emptyText: { 
+    color: '#94a3b8', 
+    fontSize: 16 
+  },
+
+  // --- MODAL E FORMULÁRIOS ---
+  modalOverlay: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.5)', 
+    justifyContent: 'center', 
+    padding: 20 
+  },
+  modalBackdrop: { 
+    position: 'absolute', 
+    top: 0, 
+    bottom: 0, 
+    left: 0, 
+    right: 0 
+  },
+  modalContent: { 
+    borderRadius: 20, 
+    padding: 25, 
+    elevation: 10 
+  },
+  modalHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: 20 
+  },
+  modalTitle: { 
+    fontSize: 20, 
+    fontWeight: 'bold' 
+  },
+  label: { 
+    marginBottom: 5, 
+    fontWeight: '600' 
+  },
+  input: { 
+    padding: 12, 
+    borderRadius: 10, 
+    fontSize: 16, 
+    marginBottom: 15 
+  },
+
+  // --- BOTÕES DE AÇÃO ---
+  btnSave: { 
+    backgroundColor: '#3870d8', 
+    padding: 15, 
+    borderRadius: 12, 
+    alignItems: 'center', 
+    marginTop: 10 
+  },
+  btnSaveText: { 
+    color: '#fff', 
+    fontWeight: 'bold', 
+    fontSize: 16 
+  },
+  btnDelete: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    marginTop: 20, 
+    gap: 5 
+  },
+  btnDeleteText: { 
+    color: '#ef4444', 
+    fontWeight: '600' 
+  }
 });
