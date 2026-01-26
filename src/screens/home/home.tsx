@@ -189,7 +189,9 @@ export default function HomeScreen() {
             {chartData.length > 0 ? (
               <View style={styles.chartRow}>
                 <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center' }}>
+
                   <PieChart data={chartData} width={160} height={160} chartConfig={{ color: () => '#000' }} accessor={"value"} backgroundColor={"transparent"} paddingLeft={"40"} hasLegend={false} />
+
                   <View style={[styles.donutHole, { backgroundColor: theme.card }]}><Text style={styles.donutText}>Total</Text></View>
                 </View>
                 <View style={styles.legendContainer}>
@@ -360,7 +362,7 @@ const styles = StyleSheet.create({
     marginTop: -25,
     borderRadius: 8,
     padding: 1,
-    marginBottom: 0,
+    marginBottom: -6,
     height: 55,
   },
   actionBtn: { 
@@ -421,7 +423,7 @@ const styles = StyleSheet.create({
     left: 45 
   },
   donutText: { 
-    fontSize: 10, 
+    fontSize: 12, 
     color: '#94a3b8', 
     fontWeight: 'bold' 
   },

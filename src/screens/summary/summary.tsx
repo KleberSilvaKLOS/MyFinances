@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between', 
     alignItems: 'center', 
     marginBottom: 0
-     
+
   },
   headerTitle: { 
     color: '#ffffffaa', 
@@ -305,10 +305,15 @@ const styles = StyleSheet.create({
     gap: 12 
   },
   btnEyeHeader: { 
-    padding: 5 
+    width: 42, 
+    height: 42, 
+    borderRadius: 21, 
+    backgroundColor: 'rgba(255, 255, 255, 0.12)', 
+    justifyContent: 'center', 
+    alignItems: 'center'  
   },
   btnAddHeader: { 
-    backgroundColor: '#ffffff74', 
+    backgroundColor: 'rgba(255, 255, 255, 0.12)', 
     width: 42, 
     height: 42, 
     borderRadius: 21, 
