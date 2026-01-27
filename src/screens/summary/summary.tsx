@@ -220,7 +220,7 @@ export default function SummaryScreen() {
 
         <Text style={[styles.sectionTitle, {color: theme.text}]}>Ranking Detalhado</Text>
         <FlatList style={{marginBottom:42}}
-          data={expensesList} 
+          data={expensesList}
           keyExtractor={(i)=>i.rawName} 
           renderItem={({item, index})=>(
             <View style={[styles.itemCard, {backgroundColor: theme.card, borderColor: theme.border}]}>
