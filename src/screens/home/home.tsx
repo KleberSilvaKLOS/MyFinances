@@ -164,7 +164,7 @@ export default function HomeScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity onPress={() => setMenuVisible(true)} style={styles.headerIconBtn}>
-                  <Ionicons name="settings-outline" size={24} color="#ffffff" />
+                  <Ionicons name="settings" size={22} color="#ffffff" />
                 </TouchableOpacity>
              </View>
           </View>

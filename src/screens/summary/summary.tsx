@@ -161,10 +161,10 @@ export default function SummaryScreen() {
             <Text style={styles.headerTitle}>Resumo Financeiro</Text>
             <View style={styles.headerRightActions}>
               <TouchableOpacity onPress={toggleVisibility} style={styles.btnEyeHeader}>
-                 <Ionicons name={isVisible ? "eye" : "eye-off"} size={24} color="#ffffffcc" />
+                 <Ionicons name={isVisible ? "eye" : "eye-off"} size={22} color="#ffffff" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.btnAddHeader} onPress={() => setModalVisible(true)}>
-                  <MaterialIcons name="settings" size={24} color={theme.header} />
+                  <Ionicons name="settings" size={22} color="#ffffff" />
               </TouchableOpacity>
             </View>
         </View>
@@ -213,12 +213,13 @@ export default function SummaryScreen() {
               <Text style={styles.donutValue}>{isVisible ? (totalExpense < 10000 ? formatCurrency(totalExpense) : `R$ ${(totalExpense/1000).toFixed(1)}k`) : '••••'}</Text>
             </View>
           </View>
+
         ) : <View style={[styles.emptyContainer, {backgroundColor: theme.card, borderColor: theme.border}]}>
               <Text style={{color: theme.subtext}}>Sem dados para este período.</Text>
             </View>}
 
         <Text style={[styles.sectionTitle, {color: theme.text}]}>Ranking Detalhado</Text>
-        <FlatList 
+        <FlatList style={{marginBottom:42}}
           data={expensesList} 
           keyExtractor={(i)=>i.rawName} 
           renderItem={({item, index})=>(
@@ -302,7 +303,7 @@ const styles = StyleSheet.create({
   headerRightActions: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    gap: 12 
+    gap: 10
   },
   btnEyeHeader: { 
     width: 42, 
@@ -412,7 +413,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     borderRadius: 15, 
     marginBottom: 20, 
-    borderWidth: 1 
+    borderWidth: 1
   },
   itemCard: { 
     flexDirection: 'row', 
@@ -421,7 +422,7 @@ const styles = StyleSheet.create({
     borderRadius: 12, 
     marginBottom: 10, 
     borderWidth: 1, 
-    elevation: 1 
+    elevation: 1
   },
   rankBadge: { 
     width: 28, 
