@@ -116,6 +116,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* --- MENU LATERAL --- */}
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.header} />
       <Modal animationType="fade" transparent visible={menuVisible} onRequestClose={() => setMenuVisible(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setMenuVisible(false)}>
           <Pressable style={[styles.drawerContainer, { backgroundColor: theme.card }]}>
@@ -154,7 +155,8 @@ export default function HomeScreen() {
         </Pressable>
       </Modal>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{marginBottom:40 + (Platform.OS==='android'?StatusBar.currentHeight||0:0)}} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.header} />
         <View style={[styles.header, { backgroundColor: theme.header }]}>
           <View style={styles.headerTop}>
              <Text style={styles.greeting}>Olá, Kleber</Text>
@@ -211,9 +213,10 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.sectionContainer}>
+          
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Contas Fixas do Mês</Text>
           <TouchableOpacity style={[styles.cardDark, isDark && { backgroundColor: theme.card }]} onPress={() => navigation.navigate('Fixas')}>
-            <View style={styles.fixedHeader}>
+            <View style={[styles.fixedHeader]}>
               <View style={styles.iconBox}><MaterialIcons name="receipt-long" size={24} color="#ef4444" /></View>
               <View><Text style={styles.fixedLabel}>Total Previsto</Text><Text style={styles.fixedValue}>{renderValue(fixedTotal)}</Text></View>
             </View>

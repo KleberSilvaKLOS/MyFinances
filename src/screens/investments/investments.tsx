@@ -129,6 +129,7 @@ export default function InvestmentsScreen() {
         onLongPress={() => handleDelete(item.id)}
       >
         <View style={styles.cardLeft}>
+          <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.header} />
           <View style={[styles.iconBox, { backgroundColor: item.type === 'crypto' ? (isDark ? '#451a03' : '#fef3c7') : (isDark ? '#1e1b4b' : '#e0e7ff') }]}>
             <FontAwesome5 
               name={item.type === 'crypto' ? 'bitcoin' : (item.type === 'variable' ? 'chart-line' : 'university')} 
@@ -143,6 +144,7 @@ export default function InvestmentsScreen() {
         </View>
 
         <View style={styles.cardRight}>
+          <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.header} />
           <Text style={[styles.cardValue, { color: theme.text }]}>{renderValue(item.currentValue)}</Text>
           <Text style={[styles.profitText, { color: isProfit ? '#13ec6d' : '#ef4444' }]}>
             {isVisible ? `${isProfit ? '+' : ''}${percent.toFixed(1)}%` : '••%'}
@@ -156,7 +158,7 @@ export default function InvestmentsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle="light-content" backgroundColor={theme.header} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.header} />
       <View style={[styles.header, { backgroundColor: theme.header }]}>
         <Text style={styles.headerTitle}>Meus Investimentos</Text>
         <Text style={styles.labelTotal}>Patrimônio Total</Text>
@@ -182,7 +184,7 @@ export default function InvestmentsScreen() {
       </View>
 
       <View style={styles.content}>
-        <FlatList
+        <FlatList style={{marginBottom:40 + (Platform.OS==='android'?StatusBar.currentHeight||0:0)}}
           data={list}
           renderItem={renderItem}
           keyExtractor={item => item.id}

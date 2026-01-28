@@ -188,6 +188,7 @@ export default function ExpensesScreen() {
       <StatusBar barStyle="light-content" backgroundColor={theme.header} />
       
       <View style={[styles.summaryContainer, { backgroundColor: theme.header }]}>
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.header} />
         <View style={styles.headerContent}>
           <View style={{ alignItems: 'center' }}>
             <Text style={styles.summaryLabel}>Saldo total</Text>
@@ -246,7 +247,7 @@ export default function ExpensesScreen() {
 
       <View style={styles.listContainer}>
         <Text style={[styles.listTitle, { color: theme.subtext }]}>{editingId ? 'Editando item...' : 'Últimas atividades'}</Text>
-        <FlatList data={list} renderItem={renderItem} keyExtractor={item => item.id} showsVerticalScrollIndicator={false} />
+        <FlatList style={{marginBottom:40 + (Platform.OS==='android'?StatusBar.currentHeight||0:0)}} data={list} renderItem={renderItem} keyExtractor={item => item.id} showsVerticalScrollIndicator={false} />
       </View>
 
       <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>

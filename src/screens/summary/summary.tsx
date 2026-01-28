@@ -155,8 +155,8 @@ export default function SummaryScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle="light-content" backgroundColor={theme.header} />
-      <View style={[styles.header, { backgroundColor: theme.header }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.header} />
+      <View style={[styles.header,{ backgroundColor: theme.header }]}>
         <View style={styles.headerTopRow}>
             <Text style={styles.headerTitle}>Resumo Financeiro</Text>
             <View style={styles.headerRightActions}>
@@ -219,7 +219,7 @@ export default function SummaryScreen() {
             </View>}
 
         <Text style={[styles.sectionTitle, {color: theme.text}]}>Ranking Detalhado</Text>
-        <FlatList style={{marginBottom:90}}
+        <FlatList style={{marginBottom:40 + (Platform.OS==='android'?StatusBar.currentHeight||0:0)}}
           data={expensesList}
           keyExtractor={(i)=>i.rawName} 
           renderItem={({item, index})=>(

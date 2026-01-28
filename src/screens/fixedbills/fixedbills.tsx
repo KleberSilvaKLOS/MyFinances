@@ -165,6 +165,7 @@ export default function FixedBillsScreen() {
     else if (status === 'overdue') { statusColor = '#ef4444'; statusText = 'Atrasado'; cardBorderColor = '#ef4444'; }
 
     return (
+      
       <TouchableOpacity 
         style={[styles.card, { backgroundColor: theme.card, borderColor: cardBorderColor, borderWidth: 1 }]} 
         onPress={() => {
@@ -173,6 +174,7 @@ export default function FixedBillsScreen() {
         activeOpacity={0.7}
       >
         <View style={styles.cardLeft}>
+          <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.header} />
           <TouchableOpacity 
             style={[styles.iconBox, { backgroundColor: status === 'overdue' ? '#fee2e2' : theme.iconBox }]}
             onPress={() => togglePayment(item)}
