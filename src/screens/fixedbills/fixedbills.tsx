@@ -32,7 +32,7 @@ export default function FixedBillsScreen() {
 
   // Paleta de cores dinâmica
   const theme = {
-    background: isDark ? '#0f172a' : '#ffffff',
+    background: isDark ? '#0f172a' : '#fefefe',
     header: isDark ? '#1e293b' : '#3870d8',
     card: isDark ? '#1e293b' : '#ffffff',
     text: isDark ? '#f8fafc' : '#334155',

@@ -29,7 +29,7 @@ export default function HomeScreen() {
 
   // Paleta de cores dinâmica
   const theme = {
-    background: isDark ? '#0f172a' : '#f8fafc',
+    background: isDark ? '#0f172a' : '#fefefe',
     card: isDark ? '#1e293b' : '#ffffff',
     text: isDark ? '#f8fafc' : '#1e293b',
     subtext: isDark ? '#94a3b8' : '#64748b',

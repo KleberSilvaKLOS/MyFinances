@@ -64,7 +64,7 @@ function TabNavigator() {
         // Estilização da barra flutuante (arredondada e descolada do fundo)
         tabBarStyle: {
           position: 'absolute',
-          bottom: - 1 + insets.bottom, // Ajuste de posição vertical
+          bottom: - 20 + insets.bottom, // Ajuste de posição vertical
           left: 20,
           right: 20,
           elevation: 5,
@@ -72,9 +72,9 @@ function TabNavigator() {
           borderRadius: 2,
           height: 50,
           
-          shadowColor: '#000',
+          shadowColor: '#fefefe',
           shadowOffset: { width: 0, height: 5 },
-          shadowOpacity: 0.1,
+          shadowOpacity: 0.01,
           shadowRadius: 3.5,
           borderTopWidth: 0,
           marginBottom: 0,

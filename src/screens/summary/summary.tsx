@@ -200,7 +200,7 @@ export default function SummaryScreen() {
           <View style={styles.chartContainer}>
             <PieChart 
               data={chartData} 
-              width={screenWidth - 40} 
+              width={screenWidth - 6} 
               height={220} 
               chartConfig={{ color: (o=1)=>`rgba(255,255,255,${o})` }} 
               accessor={"value"} 
@@ -219,7 +219,7 @@ export default function SummaryScreen() {
             </View>}
 
         <Text style={[styles.sectionTitle, {color: theme.text}]}>Ranking Detalhado</Text>
-        <FlatList style={{marginBottom:42}}
+        <FlatList style={{marginBottom:90}}
           data={expensesList}
           keyExtractor={(i)=>i.rawName} 
           renderItem={({item, index})=>(
