@@ -208,10 +208,12 @@ export default function SummaryScreen() {
               paddingLeft={"15"} 
               hasLegend={true} 
             />
+
             <View style={[styles.donutHole, {backgroundColor: theme.background}]}>
               <Text style={styles.donutLabel}>TOTAL</Text>
               <Text style={styles.donutValue}>{isVisible ? (totalExpense < 10000 ? formatCurrency(totalExpense) : `R$ ${(totalExpense/1000).toFixed(1)}k`) : '••••'}</Text>
             </View>
+
           </View>
 
         ) : <View style={[styles.emptyContainer, {backgroundColor: theme.card, borderColor: theme.border}]}>
@@ -227,16 +229,19 @@ export default function SummaryScreen() {
               <View style={[styles.rankBadge, {backgroundColor: index<5?CHART_COLORS[index]:'#94a3b8'}]}>
                 <Text style={styles.rankText}>{index+1}º</Text>
               </View>
+
               <View style={styles.itemInfo}>
                 <Text style={[styles.itemTitle, {color: theme.text}]}>{item.rawName}</Text>
                 <View style={[styles.progressBarBackground, {backgroundColor: theme.border}]}>
                   <View style={[styles.progressBarFill, {width: `${(item.value/totalExpense)*100}%`, backgroundColor: index<5?CHART_COLORS[index]:'#94a3b8'}]}/>
                 </View>
+
               </View>
               <View style={{alignItems:'flex-end'}}>
                 <Text style={styles.itemValue}>- {renderValue(item.value)}</Text>
                 <Text style={styles.itemPercent}>{isVisible ? ((item.value/totalExpense)*100).toFixed(1)+'%' : '••%'}</Text>
               </View>
+
             </View>
           )}
         />
@@ -247,15 +252,18 @@ export default function SummaryScreen() {
         <View style={styles.modalOverlay}>
           <TouchableWithoutFeedback onPress={()=>setModalVisible(false)}><View style={styles.modalBackdrop}/></TouchableWithoutFeedback>
           <View style={[styles.sideMenu, {backgroundColor: theme.card}]}>
+
             <View style={[styles.modalHeader, {borderBottomColor: theme.border}]}>
               <Text style={[styles.modalTitle, {color: theme.text}]}>Opções</Text>
               <TouchableOpacity onPress={()=>setModalVisible(false)}><MaterialIcons name="close" size={24} color={theme.text}/></TouchableOpacity>
             </View>
+
             <TouchableOpacity style={styles.btnDelete} onPress={() => { Alert.alert("Aviso", "Deseja apagar tudo?", [{text:"Não"},{text:"Sim", onPress:() => {AsyncStorage.removeItem('@myfinance:transactions'); setAllTransactions([]); setModalVisible(false);}}])}}>
               <MaterialIcons name="delete-forever" size={24} color="#ef4444"/>
               <Text style={styles.btnDeleteText}>Apagar todos os dados</Text>
             </TouchableOpacity>
           </View>
+          
         </View>
       </Modal>
     </SafeAreaView>
