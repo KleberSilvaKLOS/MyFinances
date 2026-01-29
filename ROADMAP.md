@@ -7,4 +7,4 @@
 - [ ] **Lançamentos:** - Adicionar campo de "Categoria".
     - Implementar filtro por categorias na listagem.
 - [ ] **Investimentos:** Iniciar desenvolvimento e definição de requisitos da tela de investimentos.
-- [] **Todas as telas** Atualizar o scroll para a tela toda, em todas as telas
+- [] **Todas as telas** Atualizar o scroll para a tela toda, em todas as telas.
