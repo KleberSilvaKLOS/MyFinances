@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, SafeAreaView, FlatList, Dimensions, Platform, StatusBar, 
-  TouchableOpacity, Modal, TouchableWithoutFeedback, Alert 
+  TouchableOpacity, Modal, TouchableWithoutFeedback, Alert, 
+  ScrollView
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -155,97 +156,100 @@ export default function SummaryScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.header} />
-      <View style={[styles.header,{ backgroundColor: theme.header }]}>
-        <View style={styles.headerTopRow}>
-            <Text style={styles.headerTitle}>Resumo Financeiro</Text>
-            <View style={styles.headerRightActions}>
-              <TouchableOpacity onPress={toggleVisibility} style={styles.btnEyeHeader}>
-                 <Ionicons name={isVisible ? "eye" : "eye-off"} size={22} color="#ffffff" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnAddHeader} onPress={() => setModalVisible(true)}>
-                  <Ionicons name="settings" size={22} color="#ffffff" />
-              </TouchableOpacity>
-            </View>
-        </View>
-        <Text style={styles.labelBalance}>Saldo no Período</Text>
-        <Text style={styles.valueBalance}>{renderValue(balance)}</Text>
-      </View>
-
-      <View style={[styles.filterBar, { backgroundColor: theme.filterBg }]}>
-        <View style={styles.dateSelector}>
-          <TouchableOpacity onPress={() => {setPickerMode('start'); setShowPicker(true);}} style={[styles.dateBtn, {backgroundColor: theme.dateBtn}]}>
-            <MaterialIcons name="event" size={18} color="#3870d8" />
-            <Text style={[styles.dateText, {color: theme.text}]}>{startDate.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</Text>
-          </TouchableOpacity>
-          <Text style={[styles.dateSeparator, {color: theme.subtext}]}>até</Text>
-          <TouchableOpacity onPress={() => {setPickerMode('end'); setShowPicker(true);}} style={[styles.dateBtn, {backgroundColor: theme.dateBtn}]}>
-            <MaterialIcons name="event" size={18} color="#3870d8" />
-            <Text style={[styles.dateText, {color: theme.text}]}>{endDate.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</Text>
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity 
-          onPress={() => {const now=new Date(); setStartDate(new Date(now.getFullYear(), now.getMonth(), 1)); setEndDate(now);}} 
-          style={styles.shortcutBtn}
-        >
-          <Text style={styles.shortcutText}>Mês</Text>
-        </TouchableOpacity>
-      </View>
-
-      {showPicker && <DateTimePicker value={pickerMode==='start'?startDate:endDate} mode="date" display="default" onChange={onChangeDate} maximumDate={new Date()}/>}
-
-      <View style={styles.content}>
-        <Text style={[styles.sectionTitle, {color: theme.text}]}>Gastos do Período</Text>
-        {chartData.length > 0 ? (
-          <View style={styles.chartContainer}>
-            <PieChart 
-              data={chartData} 
-              width={screenWidth - 6} 
-              height={220} 
-              chartConfig={{ color: (o=1)=>`rgba(255,255,255,${o})` }} 
-              accessor={"value"} 
-              backgroundColor={"transparent"} 
-              paddingLeft={"15"} 
-              hasLegend={true} 
-            />
-
-            <View style={[styles.donutHole, {backgroundColor: theme.background}]}>
-              <Text style={styles.donutLabel}>TOTAL</Text>
-              <Text style={styles.donutValue}>{isVisible ? (totalExpense < 10000 ? formatCurrency(totalExpense) : `R$ ${(totalExpense/1000).toFixed(1)}k`) : '••••'}</Text>
-            </View>
-
+      <ScrollView style={{marginBottom:40 + (Platform.OS==='android'?StatusBar.currentHeight||0:0)}} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.header} />
+        <View style={[styles.header,{ backgroundColor: theme.header }]}>
+          <View style={styles.headerTopRow}>
+              <Text style={styles.headerTitle}>Resumo Financeiro</Text>
+              <View style={styles.headerRightActions}>
+                <TouchableOpacity onPress={toggleVisibility} style={styles.btnEyeHeader}>
+                  <Ionicons name={isVisible ? "eye" : "eye-off"} size={22} color="#ffffff" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnAddHeader} onPress={() => setModalVisible(true)}>
+                    <Ionicons name="settings" size={22} color="#ffffff" />
+                </TouchableOpacity>
+              </View>
           </View>
+          <Text style={styles.labelBalance}>Saldo no Período</Text>
+          <Text style={styles.valueBalance}>{renderValue(balance)}</Text>
+        </View>
 
-        ) : <View style={[styles.emptyContainer, {backgroundColor: theme.card, borderColor: theme.border}]}>
-              <Text style={{color: theme.subtext}}>Sem dados para este período.</Text>
-            </View>}
+        <View style={[styles.filterBar, { backgroundColor: theme.filterBg }]}>
+          <View style={styles.dateSelector}>
+            <TouchableOpacity onPress={() => {setPickerMode('start'); setShowPicker(true);}} style={[styles.dateBtn, {backgroundColor: theme.dateBtn}]}>
+              <MaterialIcons name="event" size={18} color="#3870d8" />
+              <Text style={[styles.dateText, {color: theme.text}]}>{startDate.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</Text>
+            </TouchableOpacity>
+            <Text style={[styles.dateSeparator, {color: theme.subtext}]}>até</Text>
+            <TouchableOpacity onPress={() => {setPickerMode('end'); setShowPicker(true);}} style={[styles.dateBtn, {backgroundColor: theme.dateBtn}]}>
+              <MaterialIcons name="event" size={18} color="#3870d8" />
+              <Text style={[styles.dateText, {color: theme.text}]}>{endDate.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity 
+            onPress={() => {const now=new Date(); setStartDate(new Date(now.getFullYear(), now.getMonth(), 1)); setEndDate(now);}} 
+            style={styles.shortcutBtn}
+          >
+            <Text style={styles.shortcutText}>Mês</Text>
+          </TouchableOpacity>
+        </View>
 
-        <Text style={[styles.sectionTitle, {color: theme.text}]}>Ranking Detalhado</Text>
-        <FlatList style={{marginBottom:40 + (Platform.OS==='android'?StatusBar.currentHeight||0:0)}}
-          data={expensesList}
-          keyExtractor={(i)=>i.rawName} 
-          renderItem={({item, index})=>(
-            <View style={[styles.itemCard, {backgroundColor: theme.card, borderColor: theme.border}]}>
-              <View style={[styles.rankBadge, {backgroundColor: index<5?CHART_COLORS[index]:'#94a3b8'}]}>
-                <Text style={styles.rankText}>{index+1}º</Text>
+        {showPicker && <DateTimePicker value={pickerMode==='start'?startDate:endDate} mode="date" display="default" onChange={onChangeDate} maximumDate={new Date()}/>}
+
+        <View style={styles.content}>
+          <Text style={[styles.sectionTitle, {color: theme.text}]}>Gastos do Período</Text>
+          {chartData.length > 0 ? (
+            <View style={styles.chartContainer}>
+              <PieChart 
+                data={chartData} 
+                width={screenWidth - 6} 
+                height={220} 
+                chartConfig={{ color: (o=1)=>`rgba(255,255,255,${o})` }} 
+                accessor={"value"} 
+                backgroundColor={"transparent"} 
+                paddingLeft={"15"} 
+                hasLegend={true} 
+              />
+
+              <View style={[styles.donutHole, {backgroundColor: theme.background}]}>
+                <Text style={styles.donutLabel}>TOTAL</Text>
+                <Text style={styles.donutValue}>{isVisible ? (totalExpense < 10000 ? formatCurrency(totalExpense) : `R$ ${(totalExpense/1000).toFixed(1)}k`) : '••••'}</Text>
               </View>
 
-              <View style={styles.itemInfo}>
-                <Text style={[styles.itemTitle, {color: theme.text}]}>{item.rawName}</Text>
-                <View style={[styles.progressBarBackground, {backgroundColor: theme.border}]}>
-                  <View style={[styles.progressBarFill, {width: `${(item.value/totalExpense)*100}%`, backgroundColor: index<5?CHART_COLORS[index]:'#94a3b8'}]}/>
+            </View>
+
+          ) : <View style={[styles.emptyContainer, {backgroundColor: theme.card, borderColor: theme.border}]}>
+                <Text style={{color: theme.subtext}}>Sem dados para este período.</Text>
+              </View>}
+
+          <Text style={[styles.sectionTitle, {color: theme.text}]}>Ranking Detalhado</Text>
+          <FlatList style={{marginBottom:40 + (Platform.OS==='android'?StatusBar.currentHeight||0:0)}}
+            data={expensesList}
+            keyExtractor={(i)=>i.rawName} 
+            renderItem={({item, index})=>(
+              <View style={[styles.itemCard, {backgroundColor: theme.card, borderColor: theme.border}]}>
+                <View style={[styles.rankBadge, {backgroundColor: index<5?CHART_COLORS[index]:'#94a3b8'}]}>
+                  <Text style={styles.rankText}>{index+1}º</Text>
+                </View>
+
+                <View style={styles.itemInfo}>
+                  <Text style={[styles.itemTitle, {color: theme.text}]}>{item.rawName}</Text>
+                  <View style={[styles.progressBarBackground, {backgroundColor: theme.border}]}>
+                    <View style={[styles.progressBarFill, {width: `${(item.value/totalExpense)*100}%`, backgroundColor: index<5?CHART_COLORS[index]:'#94a3b8'}]}/>
+                  </View>
+
+                </View>
+                <View style={{alignItems:'flex-end'}}>
+                  <Text style={styles.itemValue}>- {renderValue(item.value)}</Text>
+                  <Text style={styles.itemPercent}>{isVisible ? ((item.value/totalExpense)*100).toFixed(1)+'%' : '••%'}</Text>
                 </View>
 
               </View>
-              <View style={{alignItems:'flex-end'}}>
-                <Text style={styles.itemValue}>- {renderValue(item.value)}</Text>
-                <Text style={styles.itemPercent}>{isVisible ? ((item.value/totalExpense)*100).toFixed(1)+'%' : '••%'}</Text>
-              </View>
-
-            </View>
-          )}
-        />
-      </View>
+            )}
+          />
+        </View>
+      </ScrollView>
+  
 
       {/* Modal de Opções */}
       <Modal animationType="slide" transparent visible={modalVisible} onRequestClose={()=>setModalVisible(false)}>
