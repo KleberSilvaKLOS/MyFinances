@@ -95,6 +95,7 @@ export default function InvestmentsScreen() {
       currentValue: numCurrent,
       type
     };
+    
     const newList = [newInv, ...list];
     saveData(newList);
     setName(''); setAmount(''); setCurrentValue(''); setModalVisible(false);
@@ -137,6 +138,7 @@ export default function InvestmentsScreen() {
               color={item.type === 'crypto' ? '#f59e0b' : '#3870d8'} 
             />
           </View>
+
           <View>
             <Text style={[styles.cardTitle, { color: theme.text }]}>{item.name}</Text>
             <Text style={[styles.cardSubtitle, { color: theme.subtext }]}>Investido: {renderValue(item.amount)}</Text>
