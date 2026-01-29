@@ -179,6 +179,7 @@ export default function HomeScreen() {
             <View style={[styles.iconCircle, { backgroundColor: '#dcfce7' }]}><MaterialIcons name="add" size={24} color="#13ec6d" /></View>
             <Text style={[styles.actionText, { color: theme.text }]}>Receita</Text>
           </TouchableOpacity>
+          
           <TouchableOpacity style={[styles.actionBtn, { backgroundColor: theme.card }]} onPress={() => navigation.navigate('Gastos')}>
             <View style={[styles.iconCircle, { backgroundColor: '#fee2e2' }]}><MaterialIcons name="remove" size={24} color="#ef4444" /></View>
             <Text style={[styles.actionText, { color: theme.text }]}>Despesa</Text>
@@ -196,6 +197,7 @@ export default function HomeScreen() {
 
                   <View style={[styles.donutHole, { backgroundColor: theme.card }]}><Text style={styles.donutText}>Total</Text></View>
                 </View>
+
                 <View style={styles.legendContainer}>
                   {chartData.map((item, i) => (
                     <View key={i} style={styles.legendItem}>
@@ -215,12 +217,16 @@ export default function HomeScreen() {
         <View style={styles.sectionContainer}>
           
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Contas Fixas do Mês</Text>
+          
           <TouchableOpacity style={[styles.cardDark, isDark && { backgroundColor: theme.card }]} onPress={() => navigation.navigate('Fixas')}>
+            
             <View style={[styles.fixedHeader]}>
               <View style={styles.iconBox}><MaterialIcons name="receipt-long" size={24} color="#ef4444" /></View>
               <View><Text style={styles.fixedLabel}>Total Previsto</Text><Text style={styles.fixedValue}>{renderValue(fixedTotal)}</Text></View>
             </View>
+
             <View style={[styles.fixedDivider, { backgroundColor: isDark ? theme.border : '#334155' }]} />
+
             <Text style={styles.nextBillLabel}>PENDÊNCIAS ATUAIS</Text>
             {nextBills.length > 0 ? (
               nextBills.map(b => {
@@ -237,10 +243,13 @@ export default function HomeScreen() {
                           </View>
                         )}
                       </View>
+
                       <Text style={[styles.nextBillDateText, isLate && { color: '#ef4444' }]}>Vence dia {b.dueDay}</Text>
                     </View>
+
                     <Text style={[styles.nextBillValue, isLate && { color: '#ef4444' }]}>{renderValue(b.value)}</Text>
                   </View>
+
                 );
               })
             ) : <Text style={styles.emptyText}>Parabéns! Nenhuma conta pendente.</Text>}
