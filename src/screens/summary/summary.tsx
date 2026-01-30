@@ -258,7 +258,6 @@ export default function SummaryScreen() {
               </View>
             ))}
           </View>
-
         </View>
       </ScrollView>
   
