@@ -223,30 +223,42 @@ export default function SummaryScreen() {
               </View>}
 
           <Text style={[styles.sectionTitle, {color: theme.text}]}>Ranking Detalhado</Text>
-          <FlatList style={{marginBottom:40 + (Platform.OS==='android'?StatusBar.currentHeight||0:0)}}
-            data={expensesList}
-            keyExtractor={(i)=>i.rawName} 
-            renderItem={({item, index})=>(
-              <View style={[styles.itemCard, {backgroundColor: theme.card, borderColor: theme.border}]}>
-                <View style={[styles.rankBadge, {backgroundColor: index<5?CHART_COLORS[index]:'#94a3b8'}]}>
-                  <Text style={styles.rankText}>{index+1}º</Text>
+          
+          <View style={{ marginBottom: 40 + (Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0) }}>
+            {expensesList.map((item, index) => (
+              <View 
+                key={item.rawName} // O keyExtractor vira o 'key' aqui
+                style={[styles.itemCard, { backgroundColor: theme.card, borderColor: theme.border }]}
+                >
+                <View style={[styles.rankBadge, { backgroundColor: index < 5 ? CHART_COLORS[index] : '#94a3b8' }]}>
+                  <Text style={styles.rankText}>{index + 1}º</Text>
                 </View>
 
                 <View style={styles.itemInfo}>
-                  <Text style={[styles.itemTitle, {color: theme.text}]}>{item.rawName}</Text>
-                  <View style={[styles.progressBarBackground, {backgroundColor: theme.border}]}>
-                    <View style={[styles.progressBarFill, {width: `${(item.value/totalExpense)*100}%`, backgroundColor: index<5?CHART_COLORS[index]:'#94a3b8'}]}/>
+                  <Text style={[styles.itemTitle, { color: theme.text }]}>{item.rawName}</Text>
+                  <View style={[styles.progressBarBackground, { backgroundColor: theme.border }]}>
+                    <View 
+                      style={[
+                        styles.progressBarFill, 
+                        { 
+                          width: `${(item.value / totalExpense) * 100}%`, 
+                          backgroundColor: index < 5 ? CHART_COLORS[index] : '#94a3b8' 
+                        }
+                      ]}
+                    />
                   </View>
-
                 </View>
-                <View style={{alignItems:'flex-end'}}>
+
+                <View style={{ alignItems: 'flex-end' }}>
                   <Text style={styles.itemValue}>- {renderValue(item.value)}</Text>
-                  <Text style={styles.itemPercent}>{isVisible ? ((item.value/totalExpense)*100).toFixed(1)+'%' : '••%'}</Text>
+                  <Text style={styles.itemPercent}>
+                    {isVisible ? ((item.value / totalExpense) * 100).toFixed(1) + '%' : '••%'}
+                  </Text>
                 </View>
-
               </View>
-            )}
-          />
+            ))}
+          </View>
+
         </View>
       </ScrollView>
   
