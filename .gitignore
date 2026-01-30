@@ -9,3 +9,5 @@ android/*.iml
 *.log
 dist/
 web-build/
+npm-debug.*
+yarn-error.log
