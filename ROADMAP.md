@@ -15,5 +15,3 @@
 - [] **Todas as telas** Atualizar o scroll para a tela toda, em todas as telas.
 
 - [] **Todas as telas** Organizar todas as pastas, de todas as telas, separando por import, const, fuction, estrtura e style.
-
-teste de commit.
