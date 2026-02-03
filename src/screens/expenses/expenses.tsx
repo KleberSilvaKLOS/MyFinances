@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  View, Text, StyleSheet, FlatList, SafeAreaView, 
+  View, Text, StyleSheet, FlatList, SafeAreaView, ScrollView,
   TextInput, TouchableOpacity, Keyboard, Platform, StatusBar, Alert, Modal, TouchableWithoutFeedback 
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
@@ -185,70 +185,91 @@ export default function ExpensesScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle="light-content" backgroundColor={theme.header} />
+      <ScrollView style={{marginBottom:40 + (Platform.OS==='android'?StatusBar.currentHeight||0:0)}} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
       
-      <View style={[styles.summaryContainer, { backgroundColor: theme.header }]}>
-        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.header} />
-        <View style={styles.headerContent}>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={styles.summaryLabel}>Saldo total</Text>
-            <Text style={styles.summaryAmount}>{renderValue(balance)}</Text>
+        <StatusBar barStyle="light-content" backgroundColor={theme.header} />
+        
+        <View style={[styles.summaryContainer, { backgroundColor: theme.header }]}>
+          <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.header} />
+          <View style={styles.headerContent}>
+            <View style={{ alignItems: 'center' }}>
+              <Text style={styles.summaryLabel}>Saldo total</Text>
+              <Text style={styles.summaryAmount}>{renderValue(balance)}</Text>
+            </View>
+            <View style={styles.headerRightActions}>
+                <TouchableOpacity onPress={toggleVisibility} style={styles.btnEyeHeader}>
+                  <Ionicons name={isVisible ? "eye" : "eye-off"} size={24} color="#ffffffcc" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnAddHeader} onPress={() => setModalVisible(true)}>
+                  <MaterialIcons name="add" size={30} color={theme.header} />
+                </TouchableOpacity>
+            </View>
           </View>
-          <View style={styles.headerRightActions}>
-              <TouchableOpacity onPress={toggleVisibility} style={styles.btnEyeHeader}>
-                 <Ionicons name={isVisible ? "eye" : "eye-off"} size={24} color="#ffffffcc" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnAddHeader} onPress={() => setModalVisible(true)}>
-                <MaterialIcons name="add" size={30} color={theme.header} />
-              </TouchableOpacity>
+          <View style={styles.row}>
+            <View style={styles.summaryMiniCard}>
+              <MaterialIcons name="arrow-upward" size={16} color="#13ec6d" />
+              <Text style={styles.miniCardText}>{renderValue(totalIncome)}</Text>
+            </View>
+            <View style={styles.summaryMiniCard}>
+              <MaterialIcons name="arrow-downward" size={16} color="#ef4444" />
+              <Text style={styles.miniCardText}>{renderValue(totalExpense)}</Text>
+            </View>
           </View>
         </View>
-        <View style={styles.row}>
-          <View style={styles.summaryMiniCard}>
-            <MaterialIcons name="arrow-upward" size={16} color="#13ec6d" />
-            <Text style={styles.miniCardText}>{renderValue(totalIncome)}</Text>
-          </View>
-          <View style={styles.summaryMiniCard}>
-            <MaterialIcons name="arrow-downward" size={16} color="#ef4444" />
-            <Text style={styles.miniCardText}>{renderValue(totalExpense)}</Text>
-          </View>
-        </View>
-      </View>
 
-      <View style={[styles.mainInputContainer, { backgroundColor: theme.card }]}>
-        <View style={styles.quickTypeSelector}>
-           <TouchableOpacity style={[styles.quickTypeBtn, type === 'income' ? styles.quickIncomeActive : {borderColor: theme.border, backgroundColor: theme.background}]} onPress={() => setType('income')}>
-             <MaterialIcons name="arrow-upward" size={20} color={type === 'income' ? '#fff' : '#13ec6d'} />
-             <Text style={[styles.quickTypeText, {color: type === 'income' ? '#fff' : '#13ec6d'}]}>Entrada</Text>
-           </TouchableOpacity>
-           <TouchableOpacity style={[styles.quickTypeBtn, type === 'expense' ? styles.quickExpenseActive : {borderColor: theme.border, backgroundColor: theme.background}]} onPress={() => setType('expense')}>
-             <MaterialIcons name="arrow-downward" size={20} color={type === 'expense' ? '#fff' : '#ef4444'} />
-             <Text style={[styles.quickTypeText, {color: type === 'expense' ? '#fff' : '#ef4444'}]}>Saída</Text>
-           </TouchableOpacity>
-        </View>
-        <View style={[styles.valueInputWrapper, { borderBottomColor: theme.border }]}>
-          <Text style={styles.currencyPrefix}>R$</Text>
-          <TextInput style={[styles.mainValueInput, { color: theme.text }]} placeholder="0,00" placeholderTextColor={theme.subtext} keyboardType="numeric" value={value} onChangeText={setValue} />
-        </View>
-        <View style={styles.descInputWrapper}>
-          <TextInput style={[styles.descInput, { backgroundColor: theme.input, color: theme.text }]} placeholder="Descrição" placeholderTextColor={theme.subtext} value={description} onChangeText={handleDescriptionChange} />
-          <TouchableOpacity style={styles.confirmBtn} onPress={handleSaveTransaction}><MaterialIcons name="check" size={24} color="#fff" /></TouchableOpacity>
-        </View>
-        {showSuggestions && (
-          <View style={[styles.suggestionsBox, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            {filteredSuggestions.map((item, index) => (
-              <TouchableOpacity key={index} style={[styles.suggestionItem, { borderBottomColor: theme.border }]} onPress={() => selectSuggestion(item)}>
-                <Text style={{ color: theme.text }}>{item}</Text>
-              </TouchableOpacity>
-            ))}
+        <View style={[styles.mainInputContainer, { backgroundColor: theme.card }]}>
+          <View style={styles.quickTypeSelector}>
+            <TouchableOpacity style={[styles.quickTypeBtn, type === 'income' ? styles.quickIncomeActive : {borderColor: theme.border, backgroundColor: theme.background}]} onPress={() => setType('income')}>
+              <MaterialIcons name="arrow-upward" size={20} color={type === 'income' ? '#fff' : '#13ec6d'} />
+              <Text style={[styles.quickTypeText, {color: type === 'income' ? '#fff' : '#13ec6d'}]}>Entrada</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.quickTypeBtn, type === 'expense' ? styles.quickExpenseActive : {borderColor: theme.border, backgroundColor: theme.background}]} onPress={() => setType('expense')}>
+              <MaterialIcons name="arrow-downward" size={20} color={type === 'expense' ? '#fff' : '#ef4444'} />
+              <Text style={[styles.quickTypeText, {color: type === 'expense' ? '#fff' : '#ef4444'}]}>Saída</Text>
+            </TouchableOpacity>
           </View>
-        )}
-      </View>
+          <View style={[styles.valueInputWrapper, { borderBottomColor: theme.border }]}>
+            <Text style={styles.currencyPrefix}>R$</Text>
+            <TextInput style={[styles.mainValueInput, { color: theme.text }]} placeholder="0,00" placeholderTextColor={theme.subtext} keyboardType="numeric" value={value} onChangeText={setValue} />
+          </View>
+          <View style={styles.descInputWrapper}>
+            <TextInput style={[styles.descInput, { backgroundColor: theme.input, color: theme.text }]} placeholder="Descrição" placeholderTextColor={theme.subtext} value={description} onChangeText={handleDescriptionChange} />
+            <TouchableOpacity style={styles.confirmBtn} onPress={handleSaveTransaction}><MaterialIcons name="check" size={24} color="#fff" /></TouchableOpacity>
+          </View>
+          {showSuggestions && (
+            <View style={[styles.suggestionsBox, { backgroundColor: theme.card, borderColor: theme.border }]}>
+              {filteredSuggestions.map((item, index) => (
+                <TouchableOpacity key={index} style={[styles.suggestionItem, { borderBottomColor: theme.border }]} onPress={() => selectSuggestion(item)}>
+                  <Text style={{ color: theme.text }}>{item}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
 
-      <View style={styles.listContainer}>
-        <Text style={[styles.listTitle, { color: theme.subtext }]}>{editingId ? 'Editando item...' : 'Últimas atividades'}</Text>
-        <FlatList style={{marginBottom:40 + (Platform.OS==='android'?StatusBar.currentHeight||0:0)}} data={list} renderItem={renderItem} keyExtractor={item => item.id} showsVerticalScrollIndicator={false} />
-      </View>
+        <View style={styles.listContainer}>
+          <Text style={[styles.listTitle, { color: theme.subtext }]}>{editingId ? 'Editando item...' : 'Últimas atividades'}</Text>
+          
+          <View style={{ marginBottom: 40 + (Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0) }}>
+            {list.length === 0 ? (
+              /* Opcional: Mostra algo se a lista estiver vazia */
+              <Text style={{ textAlign: 'center', marginTop: 20, color: theme.subtext }}>
+                  Nenhuma atividade recente.
+              </Text>
+            ) : (
+              /* Renderiza a lista usando map */
+              list.map((item) => (
+                <View key={item.id}>
+                  {/* Chama a função renderItem manualmente */}
+                  {renderItem({ item })} 
+                </View>
+              ))
+            )}
+          </View>
+
+          {/* <FlatList style={{marginBottom:40 + (Platform.OS==='android'?StatusBar.currentHeight||0:0)}} data={list} renderItem={renderItem} keyExtractor={item => item.id} showsVerticalScrollIndicator={false} /> */}
+        </View>
+      </ScrollView>
 
       <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
@@ -387,16 +408,16 @@ const styles = StyleSheet.create({
     fontSize: 24, 
     color: '#94a3b8', 
     fontWeight: '600', 
-    marginRight: 10 
+    marginRight: 10
   },
   mainValueInput: { 
     flex: 1, 
-    fontSize: 32, 
+    fontSize: 30, 
     fontWeight: 'bold' 
   },
   descInputWrapper: { 
     flexDirection: 'row', 
-    gap: 10 
+    gap: 10
   },
   descInput: { 
     flex: 1, 

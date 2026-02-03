@@ -29,6 +29,7 @@ export default function FixedBillsScreen() {
   const [value, setValue] = useState('');
   const [dueDay, setDueDay] = useState('');
   const [totalFixed, setTotalFixed] = useState(0);
+  const [errors, setErrors] = useState({ title: false, value: false, dueDay: false });
 
   // Paleta de cores dinâmica
   const theme = {
@@ -115,7 +116,16 @@ export default function FixedBillsScreen() {
       Alert.alert('Erro', 'Preencha todos os campos');
       return;
     }
+
     const day = parseInt(dueDay);
+    if (isNaN(day) || day < 1 || day > 31) {
+    Alert.alert("Dia Inválido", "Por favor, insira um dia entre 1 e 31.");
+    return; // IMPORTANTE: O 'return' impede que o código continue e salve errado
+    } else {}
+
+    // 3. Se passou pela validação, o código continua aqui...
+    console.log("Dia válido para salvar:", day);
+    
     const numericValue = parseFloat(value.replace(',', '.'));
     let newBillsList = [...bills];
     if (editingId) {
