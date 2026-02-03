@@ -173,6 +173,7 @@ export default function ExpensesScreen() {
           size={24} color={item.type === 'income' ? '#13ec6d' : '#ef4444'} 
         />
       </View>
+      
       <View style={styles.itemInfo}>
         <Text style={[styles.itemTitle, { color: isDark ? theme.text : '#fff' }]}>{item.description}</Text>
         <Text style={styles.itemCategory}>{item.date} às {item.time}</Text>
@@ -205,6 +206,7 @@ export default function ExpensesScreen() {
                 </TouchableOpacity>
             </View>
           </View>
+
           <View style={styles.row}>
             <View style={styles.summaryMiniCard}>
               <MaterialIcons name="arrow-upward" size={16} color="#13ec6d" />
