@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, Text, StyleSheet, FlatList, SafeAreaView, 
-  TextInput, TouchableOpacity, Modal, TouchableWithoutFeedback, Alert, Platform, StatusBar 
+  TextInput, TouchableOpacity, Modal, TouchableWithoutFeedback, Alert, Platform, StatusBar, ScrollView
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -202,56 +202,74 @@ export default function FixedBillsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle="light-content" backgroundColor={theme.header} />
-      <View style={[styles.header, { backgroundColor: theme.header }]}>
-        <View style={styles.headerTop}>
-          <Text style={styles.headerTitle}>Contas Fixas</Text>
-          <View style={styles.headerRightActions}>
-            <TouchableOpacity onPress={toggleVisibility} style={styles.btnEyeHeader}>
-               <Ionicons name={isVisible ? "eye" : "eye-off"} size={24} color="#ffffffcc" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.btnAdd} onPress={() => { setEditingId(null); setTitle(''); setValue(''); setDueDay(''); setModalVisible(true); }}>
-              <MaterialIcons name="add" size={28} color={theme.header} />
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View style={styles.totalContainer}>
-          <Text style={styles.totalLabel}>Total Mensal Previsto</Text>
-          <Text style={styles.totalValue}>{renderValue(totalFixed)}</Text>
-        </View>
-        <View style={styles.dateFilter}>
-          <TouchableOpacity onPress={() => changeMonth('prev')} style={styles.arrowBtn}><MaterialIcons name="chevron-left" size={24} color="#fff" /></TouchableOpacity>
-          <Text style={styles.dateText}>{formatMonthYear(selectedDate)}</Text>
-          <TouchableOpacity onPress={() => changeMonth('next')} style={styles.arrowBtn}><MaterialIcons name="chevron-right" size={24} color="#fff" /></TouchableOpacity>
-        </View>
-      </View>
-      <View style={styles.content}>
-        <FlatList data={bills} keyExtractor={item => item.id} renderItem={renderItem} contentContainerStyle={{ paddingBottom: 20 }}
-          ListEmptyComponent={<View style={styles.emptyState}><Text style={styles.emptyText}>Nenhuma conta cadastrada.</Text></View>} />
-      </View>
-      <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <TouchableWithoutFeedback onPress={() => setModalVisible(false)}><View style={styles.modalBackdrop} /></TouchableWithoutFeedback>
-          <View style={[styles.modalContent, { backgroundColor: theme.modal }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: isDark ? '#3870d8' : '#3870d8' }]}>{editingId ? 'Editar Conta' : 'Nova Conta'}</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}><MaterialIcons name="close" size={24} color={theme.subtext} /></TouchableOpacity>
-            </View>
-            <Text style={[styles.label, { color: theme.subtext }]}>Nome</Text>
-            <TextInput style={[styles.input, { backgroundColor: theme.input, color: theme.text }]} value={title} onChangeText={setTitle} placeholder="Ex: Aluguel" placeholderTextColor={isDark ? '#64748b' : '#94a3b8'} />
-            <View style={{ flexDirection: 'row', gap: 15 }}>
-              <View style={{ flex: 1 }}><Text style={[styles.label, { color: theme.subtext }]}>Valor</Text><TextInput style={[styles.input, { backgroundColor: theme.input, color: theme.text }]} value={value} onChangeText={setValue} keyboardType="numeric" placeholder="0,00" placeholderTextColor={isDark ? '#64748b' : '#94a3b8'} /></View>
-              <View style={{ flex: 1 }}><Text style={[styles.label, { color: theme.subtext }]}>Dia</Text><TextInput style={[styles.input, { backgroundColor: theme.input, color: theme.text }]} value={dueDay} onChangeText={setDueDay} keyboardType="numeric" placeholder="1-31" maxLength={2} placeholderTextColor={isDark ? '#64748b' : '#94a3b8'} /></View>
-            </View>
-            <TouchableOpacity style={styles.btnSave} onPress={handleSave}><Text style={styles.btnSaveText}>SALVAR</Text></TouchableOpacity>
-            {editingId && (
-              <TouchableOpacity style={styles.btnDelete} onPress={handleDelete}>
-                <MaterialIcons name="delete-outline" size={20} color="#ef4444" /><Text style={styles.btnDeleteText}>Excluir conta</Text>
+      <ScrollView style={{marginBottom:40 + (Platform.OS==='android'?StatusBar.currentHeight||0:0)}} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+        <StatusBar barStyle="light-content" backgroundColor={theme.header} />
+        <View style={[styles.header, { backgroundColor: theme.header }]}>
+          <View style={styles.headerTop}>
+            <Text style={styles.headerTitle}>Contas Fixas</Text>
+            <View style={styles.headerRightActions}>
+              <TouchableOpacity onPress={toggleVisibility} style={styles.btnEyeHeader}>
+                <Ionicons name={isVisible ? "eye" : "eye-off"} size={24} color="#ffffffcc" />
               </TouchableOpacity>
-            )}
+              <TouchableOpacity style={styles.btnAdd} onPress={() => { setEditingId(null); setTitle(''); setValue(''); setDueDay(''); setModalVisible(true); }}>
+                <MaterialIcons name="add" size={28} color={theme.header} />
+              </TouchableOpacity>
+            </View>
           </View>
+          <View style={styles.totalContainer}>
+            <Text style={styles.totalLabel}>Total Mensal Previsto</Text>
+            <Text style={styles.totalValue}>{renderValue(totalFixed)}</Text>
+          </View>
+          <View style={styles.dateFilter}>
+            <TouchableOpacity onPress={() => changeMonth('prev')} style={styles.arrowBtn}><MaterialIcons name="chevron-left" size={24} color="#fff" /></TouchableOpacity>
+            <Text style={styles.dateText}>{formatMonthYear(selectedDate)}</Text>
+            <TouchableOpacity onPress={() => changeMonth('next')} style={styles.arrowBtn}><MaterialIcons name="chevron-right" size={24} color="#fff" /></TouchableOpacity>
+          </View>
+
         </View>
-      </Modal>
+        <View style={styles.content}>
+          {/* <FlatList data={bills} keyExtractor={item => item.id} renderItem={renderItem} contentContainerStyle={{ paddingBottom: 100 }} */}
+            <View>
+              {bills.length === 0 ? (
+                /* LÓGICA DE LISTA VAZIA (ListEmptyComponent) */
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyText}>Nenhuma conta cadastrada.</Text>
+                </View>
+              ) : (
+                /* LÓGICA DE RENDERIZAÇÃO (data + renderItem) */
+                bills.map((item) => (
+                  <View key={item.id}>
+                    {renderItem({ item })}
+                  </View>
+                ))
+              )}
+            </View>
+            <View style={styles.emptyState}><Text style={styles.emptyText}>Nenhuma conta cadastrada.</Text></View>
+        </View>
+        <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback onPress={() => setModalVisible(false)}><View style={styles.modalBackdrop} /></TouchableWithoutFeedback>
+            <View style={[styles.modalContent, { backgroundColor: theme.modal }]}>
+              <View style={styles.modalHeader}>
+                <Text style={[styles.modalTitle, { color: isDark ? '#3870d8' : '#3870d8' }]}>{editingId ? 'Editar Conta' : 'Nova Conta'}</Text>
+                <TouchableOpacity onPress={() => setModalVisible(false)}><MaterialIcons name="close" size={24} color={theme.subtext} /></TouchableOpacity>
+              </View>
+              <Text style={[styles.label, { color: theme.subtext }]}>Nome</Text>
+              <TextInput style={[styles.input, { backgroundColor: theme.input, color: theme.text }]} value={title} onChangeText={setTitle} placeholder="Ex: Aluguel" placeholderTextColor={isDark ? '#64748b' : '#94a3b8'} />
+              <View style={{ flexDirection: 'row', gap: 15 }}>
+                <View style={{ flex: 1 }}><Text style={[styles.label, { color: theme.subtext }]}>Valor</Text><TextInput style={[styles.input, { backgroundColor: theme.input, color: theme.text }]} value={value} onChangeText={setValue} keyboardType="numeric" placeholder="0,00" placeholderTextColor={isDark ? '#64748b' : '#94a3b8'} /></View>
+                <View style={{ flex: 1 }}><Text style={[styles.label, { color: theme.subtext }]}>Dia</Text><TextInput style={[styles.input, { backgroundColor: theme.input, color: theme.text }]} value={dueDay} onChangeText={setDueDay} keyboardType="numeric" placeholder="1-31" maxLength={2} placeholderTextColor={isDark ? '#64748b' : '#94a3b8'} /></View>
+              </View>
+              <TouchableOpacity style={styles.btnSave} onPress={handleSave}><Text style={styles.btnSaveText}>SALVAR</Text></TouchableOpacity>
+              {editingId && (
+                <TouchableOpacity style={styles.btnDelete} onPress={handleDelete}>
+                  <MaterialIcons name="delete-outline" size={20} color="#ef4444" /><Text style={styles.btnDeleteText}>Excluir conta</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </Modal>
+      </ScrollView>
     </SafeAreaView>
   );
 }

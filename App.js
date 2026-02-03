@@ -64,22 +64,21 @@ function TabNavigator() {
         // Estilização da barra flutuante (arredondada e descolada do fundo)
         tabBarStyle: {
           position: 'absolute',
-          bottom: - 20 + insets.bottom, // Ajuste de posição vertical
+          // CORREÇÃO AQUI: Mude de -20 para um valor positivo (sua margem desejada)
+          bottom: -8 + insets.bottom, 
           left: 20,
           right: 20,
-          elevation: 5,
-          backgroundColor: isDark ? '#1e293b' : '#ffffff', // COR DINÂMICA baseada no tema
+          elevation: 0,
+          backgroundColor: isDark ? '#0f172a' : '#ffffff00',
           borderRadius: 2,
           height: 50,
           
-          shadowColor: '#fefefe',
           shadowOffset: { width: 0, height: 5 },
-          shadowOpacity: 0.01,
+          shadowOpacity: 0.00,
           shadowRadius: 3.5,
           borderTopWidth: 0,
-          marginBottom: 0,
-          
-          },
+          // marginBottom: 0, // Não é necessário se você já está controlando com 'bottom'
+        },
       }}
     >
       {/* TELA DE GASTOS */}
