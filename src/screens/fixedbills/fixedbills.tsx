@@ -219,10 +219,10 @@ export default function FixedBillsScreen() {
             <Text style={styles.headerTitle}>Contas Fixas</Text>
             <View style={styles.headerRightActions}>
               <TouchableOpacity onPress={toggleVisibility} style={styles.btnEyeHeader}>
-                <Ionicons name={isVisible ? "eye" : "eye-off"} size={24} color="#ffffffcc" />
+                <Ionicons name={isVisible ? "eye" : "eye-off"} size={22} color="#ffffff" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.btnAdd} onPress={() => { setEditingId(null); setTitle(''); setValue(''); setDueDay(''); setModalVisible(true); }}>
-                <MaterialIcons name="add" size={28} color={theme.header} />
+                <MaterialIcons name="add" size={22} color="#ffffff" />
               </TouchableOpacity>
             </View>
           </View>
@@ -230,13 +230,13 @@ export default function FixedBillsScreen() {
             <Text style={styles.totalLabel}>Total Mensal Previsto</Text>
             <Text style={styles.totalValue}>{renderValue(totalFixed)}</Text>
           </View>
-          <View style={styles.dateFilter}>
+        </View>
+          <View style={[styles.dateFilter, { backgroundColor: theme.card }]}>
             <TouchableOpacity onPress={() => changeMonth('prev')} style={styles.arrowBtn}><MaterialIcons name="chevron-left" size={24} color="#fff" /></TouchableOpacity>
             <Text style={styles.dateText}>{formatMonthYear(selectedDate)}</Text>
             <TouchableOpacity onPress={() => changeMonth('next')} style={styles.arrowBtn}><MaterialIcons name="chevron-right" size={24} color="#fff" /></TouchableOpacity>
           </View>
 
-        </View>
         <View style={styles.content}>
           {/* <FlatList data={bills} keyExtractor={item => item.id} renderItem={renderItem} contentContainerStyle={{ paddingBottom: 100 }} */}
             <View>
@@ -298,17 +298,18 @@ const styles = StyleSheet.create({
   // --- CABEÇALHO (HEADER) ---
   header: { 
     padding: 20, 
-    paddingBottom: 25, 
+    paddingTop: 31.5,
+    paddingBottom: 30, 
     borderBottomLeftRadius: 30, 
     borderBottomRightRadius: 30, 
-    elevation: 5 
+    elevation: 5, 
   },
   headerTop: { 
     flexDirection: 'row', 
     justifyContent: 'center', 
     alignItems: 'center', 
     position: 'relative', 
-    marginBottom: 15 
+    marginBottom: 15
   },
   headerTitle: { 
     color: '#ffffffaa', 
@@ -321,28 +322,34 @@ const styles = StyleSheet.create({
     right: 0, 
     flexDirection: 'row', 
     alignItems: 'center', 
-    gap: 12 
+    gap: 10
   },
   btnEyeHeader: { 
-    padding: 5 
-  },
-  btnAdd: { 
-    backgroundColor: '#fff', 
-    width: 35, 
-    height: 35, 
-    borderRadius: 18, 
+    width: 42, 
+    height: 42, 
+    borderRadius: 21, 
+    backgroundColor: 'rgba(255, 255, 255, 0.12)', 
     justifyContent: 'center', 
     alignItems: 'center' 
+  },
+  btnAdd: { 
+    width: 42, 
+    height: 42, 
+    borderRadius: 21, 
+    backgroundColor: 'rgba(255, 255, 255, 0.12)', 
+    justifyContent: 'center', 
+    alignItems: 'center'  
   },
 
   // --- RESUMO DE VALORES (TOTALIZADOR) ---
   totalContainer: { 
     alignItems: 'center', 
-    marginBottom: 15 
+    marginBottom: 0 
   },
   totalLabel: { 
     color: '#e2e8f0', 
-    fontSize: 12, 
+    fontSize: 16, 
+    fontWeight: '600',
     marginBottom: 2 
   },
   totalValue: { 
@@ -353,15 +360,18 @@ const styles = StyleSheet.create({
 
   // --- FILTRO DE DATA ---
   dateFilter: { 
+    flex: 0.48,
+    marginTop: -25,
     flexDirection: 'row', 
-    justifyContent: 'center', 
+    justifyContent: 'space-between', 
     alignItems: 'center', 
-    gap: 15, 
-    backgroundColor: 'rgba(255, 255, 255, 0.15)', 
+    gap: 70, 
     paddingVertical: 8, 
     paddingHorizontal: 15, 
     borderRadius: 20, 
-    alignSelf: 'center' 
+    height: 40, 
+    alignSelf: 'center', 
+    elevation: 20
   },
   dateText: { 
     color: '#fff', 
