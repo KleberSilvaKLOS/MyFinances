@@ -33,10 +33,10 @@ const styles = StyleSheet.create({
     width: 55,
     height: 55,
     backgroundColor: '#3870d8',
-    borderRadius: 30,
+    borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 35, // Faz o ícone "saltar" para fora da barra
+    marginBottom: 25, // Faz o ícone "saltar" para fora da barra
     elevation: 10,
     shadowColor: '#3870d8',
     shadowOffset: { width: 0, height: 5 },
@@ -65,7 +65,7 @@ function TabNavigator() {
         tabBarStyle: {
           position: 'absolute',
           // CORREÇÃO AQUI: Mude de -20 para um valor positivo (sua margem desejada)
-          bottom: -8 + insets.bottom, 
+          bottom: 0 + insets.bottom, 
           left: 20,
           right: 20,
           elevation: 0,

@@ -232,9 +232,9 @@ export default function FixedBillsScreen() {
           </View>
         </View>
           <View style={[styles.dateFilter, { backgroundColor: theme.card }]}>
-            <TouchableOpacity onPress={() => changeMonth('prev')} style={styles.arrowBtn}><MaterialIcons name="chevron-left" size={24} color="#fff" /></TouchableOpacity>
-            <Text style={styles.dateText}>{formatMonthYear(selectedDate)}</Text>
-            <TouchableOpacity onPress={() => changeMonth('next')} style={styles.arrowBtn}><MaterialIcons name="chevron-right" size={24} color="#fff" /></TouchableOpacity>
+            <TouchableOpacity onPress={() => changeMonth('prev')} style={styles.arrowBtn}><MaterialIcons name="chevron-left" size={24} color={theme.text} /></TouchableOpacity>
+            <Text style={[styles.dateText, { color: theme.text }]}>{formatMonthYear(selectedDate)}</Text>
+            <TouchableOpacity onPress={() => changeMonth('next')} style={styles.arrowBtn}><MaterialIcons name="chevron-right" size={24} color={theme.text} /></TouchableOpacity>
           </View>
 
         <View style={styles.content}>
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     marginBottom: 0 
   },
   totalLabel: { 
-    color: '#e2e8f0', 
+    color: '#ffffff', 
     fontSize: 16, 
     fontWeight: '600',
     marginBottom: 2 
