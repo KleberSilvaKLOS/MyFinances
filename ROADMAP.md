@@ -3,7 +3,7 @@
 
 - [ ] **Padronização:** Refatorar as telas para seguir um padrão fixo de layout e código (Em andamento).
 
-- [ ] **Correção (Bug):** Corrigir o ScrollView na listagem, que atualmente impede a visualização do último item.
+- [X] **Correção (Bug):** Corrigir o ScrollView na listagem, que atualmente impede a visualização do último item.
 
 - [ ] **Renda Fixa:** Implementar desconto automático do saldo total e registro na tabela de gastos ao confirmar pagamento.
 
