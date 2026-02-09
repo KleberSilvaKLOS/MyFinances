@@ -7,7 +7,7 @@
 
 - [ ] **Renda Fixa:** Implementar desconto automático do saldo total e registro na tabela de gastos ao confirmar pagamento.
 
-- [ ] **Lançamentos:** - Adicionar campo de "Categoria".
+- [X] **Lançamentos:** - Adicionar campo de "Categoria".
     - Implementar filtro por categorias na listagem.
 
 - [ ] **Investimentos:** Iniciar desenvolvimento e definição de requisitos da tela de investimentos.
