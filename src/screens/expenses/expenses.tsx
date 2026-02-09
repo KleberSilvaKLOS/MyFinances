@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  View, Text, StyleSheet, FlatList, SafeAreaView, ScrollView,
-  TextInput, TouchableOpacity, Keyboard, Platform, StatusBar, Alert, Modal, TouchableWithoutFeedback 
+  View, Text, StyleSheet, SafeAreaView, ScrollView,
+  TextInput, TouchableOpacity, Keyboard, Platform, StatusBar, Alert, Modal, TouchableWithoutFeedback, FlatList
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
-import { useTheme } from '../../context/ThemeContext'; // Importação do tema
+import { useTheme } from '../../context/ThemeContext'; 
 
 interface Transaction {
   id: string;
-  description: string;
+  description: string; 
+  detail?: string;     
   value: number;
   type: 'income' | 'expense';
   date: string;
@@ -18,30 +19,37 @@ interface Transaction {
 }
 
 const DEFAULT_SUGGESTIONS = [
-  'Supermercado', 'Padaria', 'Restaurante', 'Combustível', 
-  'Uber / Transporte', 'Aluguel', 'Conta de Luz', 'Conta de Água', 
-  'Internet', 'Salário', 'Freelance', 'Investimento', 'Lazer', 
-  'Farmácia', 'Academia', 'Manutenção Bike'
+  
 ];
 
 export default function ExpensesScreen() {
-  const { isDark } = useTheme(); // Hook do tema
+  const { isDark } = useTheme(); 
   const [list, setList] = useState<Transaction[]>([]);
   const [customCategories, setCustomCategories] = useState<string[]>([]);
+  
+  // Totais
   const [balance, setBalance] = useState<number>(0);
   const [totalIncome, setTotalIncome] = useState<number>(0);
   const [totalExpense, setTotalExpense] = useState<number>(0);
+  
+  // Estados de controle e Inputs
   const [modalVisible, setModalVisible] = useState<boolean>(false); 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(true);
-  const [description, setDescription] = useState<string>('');
+  
+  // --- CAMPOS DO FORMULÁRIO ---
   const [value, setValue] = useState<string>('');
+  const [description, setDescription] = useState<string>(''); // CATEGORIA
+  const [detail, setDetail] = useState<string>('');           // DESCRIÇÃO/DETALHE
   const [type, setType] = useState<'income' | 'expense'>('expense'); 
+  
+  // --- GERENCIAMENTO DE CATEGORIAS ---
   const [newCategoryName, setNewCategoryName] = useState<string>('');
+  const [editingCategoryIndex, setEditingCategoryIndex] = useState<number | null>(null);
+
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
 
-  // Paleta de cores dinâmica
   const theme = {
     background: isDark ? '#0f172a' : '#fefefe',
     header: isDark ? '#1e293b' : '#3870d8',
@@ -129,26 +137,103 @@ export default function ExpensesScreen() {
     setTotalExpense(expense);
   }
 
-  function handleAddCategory() {
+  // --- NOVA LÓGICA: SEGURAR CLIQUE PARA APAGAR ---
+  function handleDeleteTransaction(id: string) {
+    Alert.alert(
+      "Excluir Lançamento",
+      "Tem certeza que deseja apagar este item permanentemente?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Apagar", 
+          style: "destructive", 
+          onPress: () => {
+            const newList = list.filter(item => item.id !== id);
+            setList(newList);
+            saveData(newList);
+            // Se estava editando esse item, cancela a edição
+            if (editingId === id) {
+              setEditingId(null);
+              setValue(''); setDescription(''); setDetail('');
+            }
+          }
+        }
+      ]
+    );
+  }
+
+  // --- LÓGICA DE CATEGORIAS (ADICIONAR / EDITAR / EXCLUIR) ---
+  function handleAddOrUpdateCategory() {
     if (newCategoryName.trim() === '') return Alert.alert('Erro', 'Digite o nome');
-    const updated = [...customCategories, newCategoryName];
-    setCustomCategories(updated);
-    saveCategories(updated);
+    
+    let updatedCategories = [...customCategories];
+
+    if (editingCategoryIndex !== null) {
+      // EDITAR
+      updatedCategories[editingCategoryIndex] = newCategoryName;
+      setEditingCategoryIndex(null); // Sai do modo edição
+      Alert.alert('Sucesso', 'Categoria atualizada!');
+    } else {
+      // ADICIONAR
+      if (updatedCategories.includes(newCategoryName)) {
+        return Alert.alert('Erro', 'Categoria já existe');
+      }
+      updatedCategories.push(newCategoryName);
+      Alert.alert('Sucesso', 'Categoria adicionada!');
+    }
+
+    setCustomCategories(updatedCategories);
+    saveCategories(updatedCategories);
     setNewCategoryName('');
-    Alert.alert('Sucesso', 'Categoria adicionada!');
+  }
+
+  function handleEditCategory(index: number) {
+    setNewCategoryName(customCategories[index]);
+    setEditingCategoryIndex(index);
+  }
+
+  function handleDeleteCategory(index: number) {
+    Alert.alert(
+      "Excluir Categoria", 
+      `Deseja apagar a categoria "${customCategories[index]}"?`,
+      [
+        { text: "Não", style: 'cancel' },
+        { text: "Sim", style: 'destructive', onPress: () => {
+            const updated = customCategories.filter((_, i) => i !== index);
+            setCustomCategories(updated);
+            saveCategories(updated);
+            // Se estava editando a que foi excluída, limpa o form
+            if (editingCategoryIndex === index) {
+              setEditingCategoryIndex(null);
+              setNewCategoryName('');
+            }
+        }}
+      ]
+    );
   }
 
   function handleSaveTransaction() {
-    if (value === '' || description.trim() === '') return Alert.alert('Atenção', 'Preencha os campos');
+    if (value === '' || description.trim() === '') return Alert.alert('Atenção', 'Preencha valor e categoria');
+    
     const numericValue = parseFloat(value.replace(',', '.'));
     let newList = [...list];
+    
     if (editingId) {
-      newList = newList.map(item => item.id === editingId ? { ...item, description, value: numericValue, type } : item);
+      newList = newList.map(item => item.id === editingId ? { 
+        ...item, 
+        description, 
+        detail,      
+        value: numericValue, 
+        type 
+      } : item);
       setEditingId(null);
     } else {
       const newTransaction: Transaction = {
         id: String(new Date().getTime()),
-        description, value: numericValue, type,
+        description, 
+        detail,     
+        value: numericValue, 
+        type,
         date: new Date().toLocaleDateString('pt-BR'),
         time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
       };
@@ -156,7 +241,12 @@ export default function ExpensesScreen() {
     }
     setList(newList);
     saveData(newList);
-    setValue(''); setDescription(''); setShowSuggestions(false); Keyboard.dismiss();
+    
+    setValue(''); 
+    setDescription(''); 
+    setDetail('');
+    setShowSuggestions(false); 
+    Keyboard.dismiss();
   }
 
   const formatCurrency = (val: number) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -165,7 +255,16 @@ export default function ExpensesScreen() {
   const renderItem = ({ item }: { item: Transaction }) => (
     <TouchableOpacity 
       style={[styles.itemCard, { backgroundColor: theme.itemCard }, editingId === item.id && styles.itemCardEditing]} 
-      onPress={() => { setEditingId(item.id); setDescription(item.description); setValue(String(item.value)); setType(item.type); }}
+      onPress={() => { 
+        setEditingId(item.id); 
+        setDescription(item.description); 
+        setDetail(item.detail || ''); 
+        setValue(String(item.value)); 
+        setType(item.type); 
+      }}
+      // LÓGICA DO CLIQUE LONGO AQUI
+      onLongPress={() => handleDeleteTransaction(item.id)}
+      delayLongPress={500} // Meio segundo segurando
     >
       <View style={[styles.itemIconContainer, { backgroundColor: theme.itemIconBg }]}>
         <MaterialIcons 
@@ -176,6 +275,9 @@ export default function ExpensesScreen() {
       
       <View style={styles.itemInfo}>
         <Text style={[styles.itemTitle, { color: isDark ? theme.text : '#fff' }]}>{item.description}</Text>
+        {item.detail ? (
+           <Text style={[styles.itemDetail, { color: theme.subtext }]} numberOfLines={1}>{item.detail}</Text>
+        ) : null}
         <Text style={styles.itemCategory}>{item.date} às {item.time}</Text>
       </View>
       <Text style={[styles.itemValue, { color: item.type === 'income' ? '#13ec6d' : '#ef4444' }]}>
@@ -202,7 +304,7 @@ export default function ExpensesScreen() {
                   <Ionicons name={isVisible ? "eye" : "eye-off"} size={24} color="#ffffffcc" />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.btnAddHeader} onPress={() => setModalVisible(true)}>
-                  <MaterialIcons name="add" size={30} color={theme.header} />
+                  <MaterialIcons name="list" size={30} color={theme.header} />
                 </TouchableOpacity>
             </View>
           </View>
@@ -230,14 +332,35 @@ export default function ExpensesScreen() {
               <Text style={[styles.quickTypeText, {color: type === 'expense' ? '#fff' : '#ef4444'}]}>Saída</Text>
             </TouchableOpacity>
           </View>
+          
           <View style={[styles.valueInputWrapper, { borderBottomColor: theme.border }]}>
             <Text style={styles.currencyPrefix}>R$</Text>
             <TextInput style={[styles.mainValueInput, { color: theme.text }]} placeholder="0,00" placeholderTextColor={theme.subtext} keyboardType="numeric" value={value} onChangeText={setValue} />
           </View>
+
           <View style={styles.descInputWrapper}>
-            <TextInput style={[styles.descInput, { backgroundColor: theme.input, color: theme.text }]} placeholder="Descrição" placeholderTextColor={theme.subtext} value={description} onChangeText={handleDescriptionChange} />
-            <TouchableOpacity style={styles.confirmBtn} onPress={handleSaveTransaction}><MaterialIcons name="check" size={24} color="#fff" /></TouchableOpacity>
+            <TextInput 
+              style={[styles.descInput, { backgroundColor: theme.input, color: theme.text }]} 
+              placeholder="Categoria (ex: Pix, Mercado)" 
+              placeholderTextColor={theme.subtext} 
+              value={description} 
+              onChangeText={handleDescriptionChange} 
+            />
           </View>
+
+          <View style={[styles.descInputWrapper, { marginTop: 10 }]}>
+            <TextInput 
+              style={[styles.descInputCat, { backgroundColor: theme.input, color: theme.text }]} 
+              placeholder="Descrição (ex: para fulano)" 
+              placeholderTextColor={theme.subtext} 
+              value={detail} 
+              onChangeText={setDetail} 
+            />
+             <TouchableOpacity style={styles.confirmBtn} onPress={handleSaveTransaction}>
+                <MaterialIcons name="check" size={24} color="#fff" />
+             </TouchableOpacity>
+          </View>
+
           {showSuggestions && (
             <View style={[styles.suggestionsBox, { backgroundColor: theme.card, borderColor: theme.border }]}>
               {filteredSuggestions.map((item, index) => (
@@ -254,37 +377,80 @@ export default function ExpensesScreen() {
           
           <View style={{ marginBottom: 40 + (Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0) }}>
             {list.length === 0 ? (
-              /* Opcional: Mostra algo se a lista estiver vazia */
               <Text style={{ textAlign: 'center', marginTop: 20, color: theme.subtext }}>
                   Nenhuma atividade recente.
               </Text>
             ) : (
-              /* Renderiza a lista usando map */
               list.map((item) => (
                 <View key={item.id}>
-                  {/* Chama a função renderItem manualmente */}
                   {renderItem({ item })} 
                 </View>
               ))
             )}
           </View>
-
-          {/* <FlatList style={{marginBottom:40 + (Platform.OS==='android'?StatusBar.currentHeight||0:0)}} data={list} renderItem={renderItem} keyExtractor={item => item.id} showsVerticalScrollIndicator={false} /> */}
         </View>
       </ScrollView>
 
+      {/* --- MENU LATERAL (MODAL DE CATEGORIAS) --- */}
       <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <TouchableWithoutFeedback onPress={() => setModalVisible(false)}><View style={styles.modalBackdrop} /></TouchableWithoutFeedback>
           <View style={[styles.sideMenu, { backgroundColor: theme.card }]}>
-            <View style={styles.modalHeader}><Text style={[styles.modalTitle, { color: '#3870d8' }]}>Opções</Text><TouchableOpacity onPress={() => setModalVisible(false)}><MaterialIcons name="close" size={24} color={theme.subtext} /></TouchableOpacity></View>
-            <Text style={[styles.inputLabel, { color: '#3870d8' }]}>Nova Categoria</Text>
-            <View style={styles.addCategoryRow}>
-              <TextInput style={[styles.modalInput, { backgroundColor: theme.input, color: theme.text }]} placeholder="Nome..." placeholderTextColor={theme.subtext} value={newCategoryName} onChangeText={setNewCategoryName} />
-              <TouchableOpacity style={styles.btnAddCategory} onPress={handleAddCategory}><MaterialIcons name="add" size={24} color="#fff" /></TouchableOpacity>
+            
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: '#3870d8' }]}>Gerenciar Categorias</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <MaterialIcons name="close" size={24} color={theme.subtext} />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.btnDelete} onPress={() => { Alert.alert("Resetar", "Apagar tudo?", [{text: "Não"}, {text: "Sim", onPress: () => setList([])}]) }}>
-              <MaterialIcons name="delete-forever" size={24} color="#ef4444" /><Text style={{ color: '#ef4444', fontWeight: 'bold' }}>Apagar tudo</Text>
+            
+            <Text style={[styles.inputLabel, { color: '#3870d8' }]}>
+              {editingCategoryIndex !== null ? 'Editar Categoria' : 'Nova Categoria'}
+            </Text>
+            
+            <View style={styles.addCategoryRow}>
+              <TextInput 
+                style={[styles.modalInput, { backgroundColor: theme.input, color: theme.text }]} 
+                placeholder="Nome..." 
+                placeholderTextColor={theme.subtext} 
+                value={newCategoryName} 
+                onChangeText={setNewCategoryName} 
+              />
+              <TouchableOpacity 
+                style={[styles.btnAddCategory, editingCategoryIndex !== null && { backgroundColor: '#fbbf24' }]} 
+                onPress={handleAddOrUpdateCategory}
+              >
+                {/* Muda o ícone se estiver editando */}
+                <MaterialIcons name={editingCategoryIndex !== null ? "check" : "add"} size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+
+            {/* LISTA DAS CATEGORIAS CRIADAS */}
+            <Text style={[styles.inputLabel, { color: theme.subtext, marginTop: 10 }]}>Minhas Categorias:</Text>
+            <View style={[styles.categoryListContainer, { borderColor: theme.border }]}>
+              {customCategories.length === 0 ? (
+                <Text style={{ color: theme.subtext, fontStyle: 'italic', padding: 10 }}>Nenhuma categoria criada.</Text>
+              ) : (
+                <ScrollView style={{ maxHeight: 300 }}>
+                  {customCategories.map((cat, index) => (
+                    <View key={index} style={[styles.categoryItem, { borderBottomColor: theme.border }]}>
+                      <Text style={{ color: theme.text, flex: 1 }}>{cat}</Text>
+                      <View style={{ flexDirection: 'row', gap: 15 }}>
+                        <TouchableOpacity onPress={() => handleEditCategory(index)}>
+                          <MaterialIcons name="edit" size={20} color="#fbbf24" />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => handleDeleteCategory(index)}>
+                          <MaterialIcons name="delete-outline" size={20} color="#ef4444" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+
+            <TouchableOpacity style={styles.btnDelete} onPress={() => { Alert.alert("Resetar", "Apagar TUDO (Lançamentos e Categorias)?", [{text: "Não"}, {text: "Sim", onPress: () => { setList([]); setCustomCategories([]); }}]) }}>
+              <MaterialIcons name="delete-forever" size={24} color="#ef4444" /><Text style={{ color: '#ef4444', fontWeight: 'bold' }}>Resetar App</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -370,7 +536,9 @@ const styles = StyleSheet.create({
     marginTop: -30, 
     borderRadius: 20, 
     padding: 20, 
-    elevation: 8 
+    elevation: 8 ,
+    zIndex: 100
+
   },
   quickTypeSelector: { 
     flexDirection: 'row', 
@@ -428,6 +596,13 @@ const styles = StyleSheet.create({
     height: 50, 
     fontSize: 16 
   },
+  descInputCat: { 
+    flex: 1, 
+    borderRadius: 10, 
+    paddingHorizontal: 15, 
+    height: 50, 
+    fontSize: 15
+  },
   confirmBtn: { 
     width: 50, 
     height: 50, 
@@ -440,30 +615,32 @@ const styles = StyleSheet.create({
   // --- AUTOCOMPLETE / SUGESTÕES ---
   suggestionsBox: { 
     position: 'absolute', 
-    top: 185, 
+    top: 202, // Ajustado para aparecer logo abaixo da categoria
     left: 20, 
     right: 20, 
     borderRadius: 8, 
     borderWidth: 1, 
     elevation: 5, 
-    maxHeight: 150, 
-    zIndex: 100 
+    maxHeight: 1500, 
+    zIndex: 100
   },
   suggestionItem: { 
-    padding: 12, 
+    padding: 10, 
     borderBottomWidth: 1 
   },
 
   // --- LISTAGEM DE ITENS ---
   listContainer: { 
+    
     flex: 1, 
     paddingHorizontal: 20, 
-    paddingTop: 10 
+    paddingTop: 10,
+    zIndex: 0
   },
   listTitle: { 
     fontSize: 18, 
     fontWeight: 'bold', 
-    marginBottom: 15 
+    marginBottom: 5 
   },
   itemCard: { 
     flexDirection: 'row', 
@@ -487,6 +664,10 @@ const styles = StyleSheet.create({
   itemTitle: { 
     fontSize: 16, 
     fontWeight: '600' 
+  },
+  itemDetail: {
+    fontSize: 12,
+    marginBottom: 2
   },
   itemCategory: { 
     color: '#a5a5a7', 
@@ -530,7 +711,7 @@ const styles = StyleSheet.create({
   addCategoryRow: { 
     flexDirection: 'row', 
     gap: 10, 
-    marginBottom: 20 
+    marginBottom: 10 
   },
   modalInput: { 
     flex: 1, 
@@ -545,12 +726,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center', 
     alignItems: 'center' 
   },
+  // ESTILOS DA LISTA DE CATEGORIAS
+  categoryListContainer: {
+    flex: 1,
+    marginTop: 5,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 5
+  },
+  categoryItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
   btnDelete: { 
     flexDirection: 'row', 
     alignItems: 'center', 
     justifyContent: 'center', 
     gap: 8, 
     padding: 10, 
-    marginTop: 20 
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9'
   }
 });
