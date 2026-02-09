@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  View, Text, StyleSheet, FlatList, SafeAreaView, 
+  View, Text, StyleSheet, FlatList, 
   TextInput, TouchableOpacity, Modal, TouchableWithoutFeedback, Alert, Platform, StatusBar, ScrollView
 } from 'react-native';
+// 1. CORREÇÃO: Importando SafeAreaView da biblioteca certa
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
-import { useTheme } from '../../context/ThemeContext'; // Importação do tema
+import { useTheme } from '../../context/ThemeContext'; 
 
 interface FixedBill {
   id: string;
@@ -18,7 +20,7 @@ interface FixedBill {
 type BillStatus = 'paid' | 'pending' | 'overdue';
 
 export default function FixedBillsScreen() {
-  const { isDark } = useTheme(); // Hook do tema
+  const { isDark } = useTheme(); 
   const [bills, setBills] = useState<FixedBill[]>([]);
   const [paymentsMap, setPaymentsMap] = useState<{[key: string]: boolean}>({}); 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -29,9 +31,8 @@ export default function FixedBillsScreen() {
   const [value, setValue] = useState('');
   const [dueDay, setDueDay] = useState('');
   const [totalFixed, setTotalFixed] = useState(0);
-  const [errors, setErrors] = useState({ title: false, value: false, dueDay: false });
+  // Removi o 'errors' que não estava sendo usado para limpar o código
 
-  // Paleta de cores dinâmica
   const theme = {
     background: isDark ? '#0f172a' : '#fefefe',
     header: isDark ? '#1e293b' : '#3870d8',
@@ -63,16 +64,21 @@ export default function FixedBillsScreen() {
   };
 
   useEffect(() => {
-    const total = bills.reduce((acc, bill) => acc + bill.value, 0);
-    setTotalFixed(total);
+    // Blindagem: garante que bills é array antes de rodar reduce
+    if (Array.isArray(bills)) {
+      const total = bills.reduce((acc, bill) => acc + bill.value, 0);
+      setTotalFixed(total);
+    }
   }, [bills]);
 
   async function loadData() {
     try {
       const billsJson = await AsyncStorage.getItem('@myfinance:fixed_bills');
-      if (billsJson) setBills(JSON.parse(billsJson));
+      // 2. CORREÇÃO: (JSON.parse(...) || []) evita o erro de "null value"
+      setBills(billsJson ? (JSON.parse(billsJson) || []) : []);
+      
       const paymentsJson = await AsyncStorage.getItem('@myfinance:bill_payments');
-      if (paymentsJson) setPaymentsMap(JSON.parse(paymentsJson));
+      setPaymentsMap(paymentsJson ? (JSON.parse(paymentsJson) || {}) : {});
     } catch (e) { console.log(e); }
   }
 
@@ -103,12 +109,39 @@ export default function FixedBillsScreen() {
     return 'pending';
   };
 
-  const togglePayment = (bill: FixedBill) => {
+  // 3. CORREÇÃO: Nova lógica de togglePayment com integração ao Saldo Global
+  const togglePayment = async (bill: FixedBill) => {
     const month = selectedDate.getMonth();
     const year = selectedDate.getFullYear();
     const paymentKey = `${bill.id}_${month}_${year}`;
-    const newMap = { ...paymentsMap, [paymentKey]: !paymentsMap[paymentKey] };
-    savePaymentStatus(newMap);
+    
+    // Descobre se a ação é PAGAR (true) ou DESPAGAR (false)
+    const isPaying = !paymentsMap[paymentKey];
+    
+    // Atualiza estado local (visual)
+    const newMap = { ...paymentsMap, [paymentKey]: isPaying };
+    await savePaymentStatus(newMap);
+
+    // Atualiza Saldo Global (Home)
+    try {
+      const balanceKey = '@myfinance:balance'; // Mesma chave usada na Home
+      const currentBalanceStr = await AsyncStorage.getItem(balanceKey);
+      let currentBalance = currentBalanceStr ? parseFloat(currentBalanceStr) : 0;
+
+      // Se não for número válido, zera
+      if (isNaN(currentBalance)) currentBalance = 0;
+
+      if (isPaying) {
+        currentBalance -= bill.value; // Desconta
+      } else {
+        currentBalance += bill.value; // Estorna (devolve)
+      }
+
+      await AsyncStorage.setItem(balanceKey, JSON.stringify(currentBalance));
+      
+    } catch (e) {
+      console.log("Erro ao atualizar saldo global:", e);
+    }
   };
 
   const handleSave = () => {
@@ -119,15 +152,14 @@ export default function FixedBillsScreen() {
 
     const day = parseInt(dueDay);
     if (isNaN(day) || day < 1 || day > 31) {
-    Alert.alert("Dia Inválido", "Por favor, insira um dia entre 1 e 31.");
-    return; // IMPORTANTE: O 'return' impede que o código continue e salve errado
-    } else {}
+      Alert.alert("Dia Inválido", "Por favor, insira um dia entre 1 e 31.");
+      return; 
+    }
 
-    // 3. Se passou pela validação, o código continua aqui...
-    console.log("Dia válido para salvar:", day);
-    
     const numericValue = parseFloat(value.replace(',', '.'));
-    let newBillsList = [...bills];
+    // Blindagem contra array nulo
+    let newBillsList = Array.isArray(bills) ? [...bills] : [];
+    
     if (editingId) {
       newBillsList = newBillsList.map(b => b.id === editingId ? { ...b, title, value: numericValue, dueDay: day } : b);
     } else {
@@ -143,7 +175,9 @@ export default function FixedBillsScreen() {
     Alert.alert("Excluir Conta", "Isso removerá esta conta fixa permanentemente.", [
       { text: "Cancelar", style: 'cancel' },
       { text: "Excluir", style: 'destructive', onPress: () => {
-          const filtered = bills.filter(b => b.id !== editingId);
+          // Blindagem contra array nulo
+          const currentBills = Array.isArray(bills) ? bills : [];
+          const filtered = currentBills.filter(b => b.id !== editingId);
           saveData(filtered);
           setModalVisible(false);
       }}
@@ -175,7 +209,6 @@ export default function FixedBillsScreen() {
     else if (status === 'overdue') { statusColor = '#ef4444'; statusText = 'Atrasado'; cardBorderColor = '#ef4444'; }
 
     return (
-      
       <TouchableOpacity 
         style={[styles.card, { backgroundColor: theme.card, borderColor: cardBorderColor, borderWidth: 1 }]} 
         onPress={() => {
@@ -238,15 +271,12 @@ export default function FixedBillsScreen() {
           </View>
 
         <View style={styles.content}>
-          {/* <FlatList data={bills} keyExtractor={item => item.id} renderItem={renderItem} contentContainerStyle={{ paddingBottom: 100 }} */}
             <View>
-              {bills.length === 0 ? (
-                /* LÓGICA DE LISTA VAZIA (ListEmptyComponent) */
+              {(!bills || bills.length === 0) ? (
                 <View style={styles.emptyState}>
                   <Text style={styles.emptyText}>Nenhuma conta cadastrada.</Text>
                 </View>
               ) : (
-                /* LÓGICA DE RENDERIZAÇÃO (data + renderItem) */
                 bills.map((item) => (
                   <View key={item.id}>
                     {renderItem({ item })}
@@ -254,7 +284,6 @@ export default function FixedBillsScreen() {
                 ))
               )}
             </View>
-            <View style={styles.emptyState}><Text style={styles.emptyText}>Nenhuma conta cadastrada.</Text></View>
         </View>
         <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
           <View style={styles.modalOverlay}>
@@ -285,17 +314,16 @@ export default function FixedBillsScreen() {
 }
 
 const styles = StyleSheet.create({
-  // --- ESTRUTURA GLOBAL ---
   container: { 
     flex: 1, 
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 
+    // Com o novo SafeArea, isso pode ser opcional, mas mal não faz
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 ,
+    marginTop: -35
   },
   content: { 
     flex: 1, 
     padding: 20 
   },
-
-  // --- CABEÇALHO (HEADER) ---
   header: { 
     padding: 20, 
     paddingTop: 31.5,
@@ -340,8 +368,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center', 
     alignItems: 'center'  
   },
-
-  // --- RESUMO DE VALORES (TOTALIZADOR) ---
   totalContainer: { 
     alignItems: 'center', 
     marginBottom: 0 
@@ -357,8 +383,6 @@ const styles = StyleSheet.create({
     fontSize: 36, 
     fontWeight: 'bold' 
   },
-
-  // --- FILTRO DE DATA ---
   dateFilter: { 
     flex: 0.48,
     marginTop: -25,
@@ -383,8 +407,6 @@ const styles = StyleSheet.create({
   arrowBtn: { 
     padding: 2 
   },
-
-  // --- LISTAGEM E CARDS (ITENS) ---
   card: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
@@ -432,8 +454,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold', 
     textTransform: 'uppercase' 
   },
-
-  // --- ESTADOS VAZIOS (EMPTY STATE) ---
   emptyState: { 
     alignItems: 'center', 
     marginTop: 50 
@@ -442,8 +462,6 @@ const styles = StyleSheet.create({
     color: '#94a3b8', 
     fontSize: 16 
   },
-
-  // --- MODAL E FORMULÁRIOS ---
   modalOverlay: { 
     flex: 1, 
     backgroundColor: 'rgba(0,0,0,0.5)', 
@@ -482,8 +500,6 @@ const styles = StyleSheet.create({
     fontSize: 16, 
     marginBottom: 15 
   },
-
-  // --- BOTÕES DE AÇÃO ---
   btnSave: { 
     backgroundColor: '#3870d8', 
     padding: 15, 
