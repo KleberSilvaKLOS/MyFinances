@@ -1,13 +1,15 @@
 import React, { useState, useCallback } from 'react';
 import { 
-  View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, 
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, 
   Dimensions, StatusBar, Platform, Alert, Modal, Pressable 
 } from 'react-native';
+// 1. AQUI ESTÁ A MUDANÇA: Importando da biblioteca correta
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { PieChart } from 'react-native-chart-kit';
-import { useTheme } from '../../context/ThemeContext'; // Importação do tema
+import { useTheme } from '../../context/ThemeContext'; 
 
 const screenWidth = Dimensions.get('window').width;
 const CHART_COLORS = ['#3870d8', '#13ec6d', '#ef4444', '#f59e0b', '#8b5cf6'];
@@ -17,7 +19,7 @@ interface FixedBill { id: string; title: string; value: number; dueDay: number; 
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
-  const { isDark, toggleTheme } = useTheme(); // Hook do tema
+  const { isDark, toggleTheme } = useTheme(); 
   
   const [balance, setBalance] = useState(0);
   const [monthExpense, setMonthExpense] = useState(0);
@@ -27,7 +29,6 @@ export default function HomeScreen() {
   const [isVisible, setIsVisible] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false);
 
-  // Paleta de cores dinâmica
   const theme = {
     background: isDark ? '#0f172a' : '#fefefe',
     card: isDark ? '#1e293b' : '#ffffff',
@@ -264,7 +265,10 @@ const styles = StyleSheet.create({
   // --- LAYOUT GERAL ---
   container: { 
     flex: 1, 
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 
+    // Nota: Com o SafeAreaView novo, às vezes o padding manual não é necessário, 
+    // mas mantive para garantir que não quebre seu layout atual.
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 ,
+    marginTop: -35
   },
   emptyText: { 
     color: '#94a3b8', 
@@ -275,9 +279,11 @@ const styles = StyleSheet.create({
 
   header: { 
     padding: 20, 
+    paddingTop: 31.5,
     paddingBottom: 30, 
     borderBottomLeftRadius: 30, 
-    borderBottomRightRadius: 30 
+    borderBottomRightRadius: 30,
+    marginTop: -10
   },
   headerTop: { 
     flexDirection: 'row', 

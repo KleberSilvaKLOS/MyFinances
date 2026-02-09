@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
     width: 90, 
     height: 90, 
     borderRadius: 45, 
-    left: (screenWidth / 2) - 138, 
+    left: (screenWidth / 2) - 146, 
     justifyContent: 'center', 
     alignItems: 'center', 
     elevation: 2 
