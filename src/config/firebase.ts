@@ -1,9 +1,11 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+// 1. Adicionamos initializeAuth e getReactNativePersistence
+import { initializeAuth, getReactNativePersistence, getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+// 2. Importamos o AsyncStorage
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
-  // Verifique se não há espaços em branco antes ou depois da chave
   apiKey: "AIzaSyDTy2Fcv1t4jMWgdr8Qrw1oZflTtemGWCQ", 
   authDomain: "myfinance-79f20.firebaseapp.com",
   projectId: "myfinance-79f20",
@@ -13,8 +15,20 @@ const firebaseConfig = {
   measurementId: "G-3ESMJKX06K"
 };
 
-// Lógica para evitar duplicidade de instância
+// Garante que o app só é inicializado uma vez
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-export const auth = getAuth(app);
+// 3. Lógica blindada para o Login Persistente
+let auth;
+try {
+  // Tenta inicializar com a persistência do React Native
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+  });
+} catch (e) {
+  // Se o app recarregar rápido (Fast Refresh) e já tiver auth, pega a existente para não dar erro
+  auth = getAuth(app);
+}
+
+export { auth };
 export const db = getFirestore(app);
