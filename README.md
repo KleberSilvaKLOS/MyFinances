@@ -197,3 +197,5 @@ Abra um Pull Request
 - Para realizar a atualização do aplicativo, siga os seguintes passos:
   **app.json** - Atualize a versão do aplicativo. Por exemplo, "version": 1.0.1 para 1.0.2. para sempre dar certo as atualizoes. Recomendo que deixe para atualizar por ultimo, depois de todos os testes.
   **atualizando pasta android** - Para que a build apk do android studio funcione, rode no terminal. dentro da pasta do projeto o seguinte comando "npx expo prebuild --platform android". Com esse comando ele atualiza a pasta android, consequentemente deixando tudo atualizado. Recomendavel realizar a branch depois desse comando.
+
+  Teste de commit
