@@ -1,3 +1,5 @@
+// Separar imports
+
 import React, { useState, useCallback } from 'react';
 import { 
   View, Text, StyleSheet, ScrollView, TouchableOpacity, 
@@ -10,6 +12,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { PieChart } from 'react-native-chart-kit';
 import { useTheme } from '../../context/ThemeContext'; 
+
+// Separar const
 
 const screenWidth = Dimensions.get('window').width;
 const CHART_COLORS = ['#3870d8', '#13ec6d', '#ef4444', '#f59e0b', '#8b5cf6'];
@@ -70,6 +74,8 @@ export default function HomeScreen() {
     }, [isVisible])
   );
 
+  // Separar function.
+
   async function loadDashboardData() {
     try {
       const transJson = await AsyncStorage.getItem('@myfinance:transactions');
@@ -113,6 +119,8 @@ export default function HomeScreen() {
   }
 
   const renderValue = (val: number) => isVisible ? val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '••••••';
+
+  // Separar scrollView geral
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -276,6 +284,9 @@ const styles = StyleSheet.create({
   },
 
   // --- CABEÇALHO (HEADER) ---
+
+
+  // separar style geral na pasta !!!
 
   header: { 
     padding: 20, 
