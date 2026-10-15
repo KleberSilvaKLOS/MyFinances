@@ -53,3 +53,13 @@
   - Mini-game de arrastar e soltar despesas nas categorias corretas (Necessidades, Desejos, Investimentos).
 - [ ] **Puzzle 4: "Desafio dos 30 Dias"**
   - Trilhas progressivas de pequenas economias diárias com conquistas e medalhas no perfil.
+
+
+
+  Ordem Sugerida para Trabalharmos JuntosQuando voltares do treino, sugiro seguirmos esta sequência prática passo a passo (escrevendo e comentando linha a linha):
+  
+  Passo 1 (Base Global): Criar src/@types/finance.ts, src/utils/currency.ts e melhorar o ThemeContext.tsx (para nunca mais teres de repetir a lista de cores ou a formatação de moeda nas telas).
+  
+  Passo 2 (Rotas): Tirar a bagunça do App.js da raiz e organizar tudo dentro de src/routes/app.tsx.   
+  
+  Passo 3 (Refatorar Telas uma a uma):Começamos pela Home (src/screens/home/).   Depois Gastos (src/screens/expenses/).   Depois Contas Fixas (src/screens/fixedbills/) — já corrigindo o desconto no saldo.   Depois Resumo (src/screens/summary/) e Investimentos (src/screens/investments/).   Por fim, Login e Auth (login.tsx, pinCreate.tsx, email.tsx) — corrigindo o bug dos 4/6 dígitos do PIN.   
