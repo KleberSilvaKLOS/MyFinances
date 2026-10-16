@@ -1,12 +1,14 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-// 1. Adicionamos initializeAuth e getReactNativePersistence
-import { initializeAuth, getReactNativePersistence, getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-// 2. Importamos o AsyncStorage
+import { initializeAuth, getReactNativePersistence, getAuth, Auth } from "firebase/auth";
+import { getFirestore, Firestore } from "firebase/firestore";
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
+/**
+ * Configuração do Firebase.
+ * Insira sua apiKey válida do Console do Firebase quando for utilizar autenticação remota.
+ */
 const firebaseConfig = {
-  apiKey: "", 
+  apiKey: "AIzaSyD-SUA_CHAVE_AQUI", // Insira sua API Key real aqui
   authDomain: "myfinance-79f20.firebaseapp.com",
   projectId: "myfinance-79f20",
   storageBucket: "myfinance-79f20.firebasestorage.app",
@@ -15,20 +17,27 @@ const firebaseConfig = {
   measurementId: "G-3ESMJKX06K"
 };
 
-// Garante que o app só é inicializado uma vez
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+let app: any = null;
+let auth: Auth | any = null;
+let db: Firestore | any = null;
 
-// 3. Lógica blindada para o Login Persistente
-let auth;
-try {
-  // Tenta inicializar com a persistência do React Native
-  auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(ReactNativeAsyncStorage)
-  });
-} catch (e) {
-  // Se o app recarregar rápido (Fast Refresh) e já tiver auth, pega a existente para não dar erro
-  auth = getAuth(app);
+// Inicializa o Firebase apenas se houver uma chave configurada, evitando quebrar o app local
+if (firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("SUA_CHAVE_AQUI")) {
+  try {
+    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+    try {
+      auth = initializeAuth(app, {
+        persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+      });
+    } catch {
+      auth = getAuth(app);
+    }
+
+    db = getFirestore(app);
+  } catch (error) {
+    console.warn("Aviso: Falha ao inicializar Firebase. O app seguirá em modo offline.", error);
+  }
 }
 
-export { auth };
-export const db = getFirestore(app);
+export { auth, db };
