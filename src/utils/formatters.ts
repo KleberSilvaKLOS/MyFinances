@@ -27,3 +27,20 @@ export function formatCurrency(val: number): string {
  * @param isVisible - Estado de visibilidade (olhinho aberto ou fechado).
  * @returns Valor em R$ ou máscara oculta.
  */
+
+export function formatPrivateValue(val: number, isVisible: boolean): string {
+  return isVisible ? formatCurrency(val) : '••••••';
+}
+
+/**
+ * Convert uma string de valor digitada pelo usuário (Com vírgula) em numero válido.
+ *
+ * @param rawValue - Texto digitado no input (ex: "150,50").
+ * @returns Número float (ex: 150.5) ou 0 se inválido.
+ */
+
+export function parseCurrency(rawValue: string): number {
+  if (!rawValue) return 0;
+  const parsed = parseFloat(rawValue.replace(',', '.'));
+  return isNaN(parsed) ? 0 : parsed;
+}
