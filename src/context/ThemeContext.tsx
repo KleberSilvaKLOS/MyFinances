@@ -32,7 +32,7 @@ interface ThemeContextData {
 
 const ThemeContext = createContext<ThemeContextData>({} as ThemeContextData);
 
-export const ThemeProvider: ({ children}: { children: ReactNode }) => {
+export const ThemeProvider = ({ children}: { children: ReactNode }) => {
   const deviceScheme = useColorScheme();
   const [isDark, setIsDark] = useState<boolean>(deviceScheme === 'dark');
   const [isVisible, setIsVisible] = useState<boolean>(true);
