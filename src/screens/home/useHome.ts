@@ -1,0 +1,1 @@
+// Lógica de negócio, cálculos e leitura do AsyncStorage
