@@ -6,14 +6,14 @@
 ### ⚙️ Refatoração & Arquitetura Base
 - [ ] **Padronização:** Refatorar as telas para seguir um padrão fixo de layout e código *(Em andamento)*.
 - [ ] **Organização Modular:** Padronizar arquivos de telas separando a estrutura interna (`import`, `const`, `function`, estrutura/render e `style`).
-- [ ] **Scroll Global:** Atualizar o scroll para a tela toda, em todas as telas necessárias.
+- [X] **Scroll Global:** Atualizar o scroll para a tela toda, em todas as telas necessárias.
 - [X] **Correção (Bug):** Corrigir o ScrollView na listagem, que atualmente impede a visualização do último item.
 
 ---
 
 ### 🎨 Interface & Experiência (UI/UX)
-- [ ] **Temas:** Implementar suporte a **Modo Claro** e **Modo Escuro** (com toggle manual e persistência da preferência).
-- [ ] *(Sugestão)* **Modo Privacidade:** Botão para ocultar/exibir saldo na tela inicial com um toque.
+- [X] **Temas:** Implementar suporte a **Modo Claro** e **Modo Escuro** (com toggle manual e persistência da preferência).
+- [X] *(Sugestão)* **Modo Privacidade:** Botão para ocultar/exibir saldo na tela inicial com um toque.
 
 ---
 
