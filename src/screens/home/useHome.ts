@@ -40,3 +40,54 @@ export function useHome() {
    *
    * @param list - Coleção completa de transações recuperada do AsyncStorage.
    */
+  const calculateBalanceAndChart = (list: Transaction[]) => {
+    let totalBal = 0;
+    let currentMonthExpense = 0;
+    const expensesMap: { [key: string]: number } = {};
+    const now = new Date();
+
+    list.forEach((item) => {
+      const val = Number(item.value);
+
+      // Soma entradas e subtrai saídas para obter o saldo geral líquido
+      if (item.type === 'income') {
+        totalBal += val;
+      } else {
+        totalBal -= val;
+      }
+
+    // Valida se o lançcamento pertence ao mês e ano vigentes
+    const [d, m, y] = item.date.split('/').map(Number);
+    if (item.type === 'expense' && m - 1 === now.getMonth() && y == now.getFullYear()) {
+      currentMonthExpense += val;
+      expensesMap[item.description] = (expensesMap[item.description] || 0) + val;
+    }
+  });
+
+  setBalance(totalBal);
+  setMonthExpense(currentMonthExpense);
+
+  // Formata e ordena os 4 maiores gastos para exibição no gráfico Donut
+  const data: ChartItem[] = Object.keys(expensesMap)
+    .map((key, i) => ({
+      name: key,
+      value: expensesMap[key],
+      color: CHART_COLORS[i % CHART_COLORS.length],
+      legendFontColor: isDark ? '#94a3b8' : '#64748b',
+      legendFontSize: 12,
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 4);
+
+  setChartData(data);
+  };
+
+  /**
+   * Avalia as contas fixas cadastradas cruzando com o histórico de liquidações:
+   * 1. Soma o valor total mensal previsto de contas fixas.
+   * 2. Filtra apenas as contas que ainda não foram marcadas como pagas no mês atual.
+   * 3. Ordena as contas em aberto pelo dia do vencimento mais próximo.
+   *
+   * @param bills - Lista com todas as contas fixas cadastradas.
+   * @param paymentsMap - Dicionário de pagamentos do mês ("ID_MES_ANO": true).
+   */
