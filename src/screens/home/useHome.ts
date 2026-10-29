@@ -1,5 +1,3 @@
-// Lógica de negócio, cálculos e leitura do AsyncStorage
-
 /**
  * ============================================================================
  * HOOK CUSTOMIZADO: useHome
@@ -18,18 +16,18 @@ import { Transaction, FixedBill, ChartItem, CHART_COLORS } from './types';
 
 export function useHome() {
   const navigation = useNavigation<any>();
-  const { theme, isDark, toggleTheme, isVisible, toggleVisibility } = useTheme ();
+  const { theme, isDark, toggleTheme, isVisible, toggleVisibility } = useTheme();
 
   // Estados dos montantes financeiros
   const [balance, setBalance] = useState<number>(0);
   const [monthExpense, setMonthExpense] = useState<number>(0);
   const [fixedTotal, setFixedTotal] = useState<number>(0);
 
-  //Estados dos dados tratados para renderização
+  // Estados dos dados tratados para renderização
   const [chartData, setChartData] = useState<ChartItem[]>([]);
   const [nextBills, setNextBills] = useState<FixedBill[]>([]);
 
-  //Estado do menu lateral (Drawer/Modal)
+  // Estado do menu lateral (Drawer/Modal)
   const [menuVisible, setMenuVisible] = useState<boolean>(false);
 
   /**
@@ -56,30 +54,30 @@ export function useHome() {
         totalBal -= val;
       }
 
-    // Valida se o lançcamento pertence ao mês e ano vigentes
-    const [d, m, y] = item.date.split('/').map(Number);
-    if (item.type === 'expense' && m - 1 === now.getMonth() && y == now.getFullYear()) {
-      currentMonthExpense += val;
-      expensesMap[item.description] = (expensesMap[item.description] || 0) + val;
-    }
-  });
+      // Valida se o lançamento pertence ao mês e ano vigentes
+      const [d, m, y] = item.date.split('/').map(Number);
+      if (item.type === 'expense' && m - 1 === now.getMonth() && y === now.getFullYear()) {
+        currentMonthExpense += val;
+        expensesMap[item.description] = (expensesMap[item.description] || 0) + val;
+      }
+    });
 
-  setBalance(totalBal);
-  setMonthExpense(currentMonthExpense);
+    setBalance(totalBal);
+    setMonthExpense(currentMonthExpense);
 
-  // Formata e ordena os 4 maiores gastos para exibição no gráfico Donut
-  const data: ChartItem[] = Object.keys(expensesMap)
-    .map((key, i) => ({
-      name: key,
-      value: expensesMap[key],
-      color: CHART_COLORS[i % CHART_COLORS.length],
-      legendFontColor: isDark ? '#94a3b8' : '#64748b',
-      legendFontSize: 12,
-    }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 4);
+    // Formata e ordena os 4 maiores gastos para exibição no gráfico
+    const data: ChartItem[] = Object.keys(expensesMap)
+      .map((key, i) => ({
+        name: key,
+        value: expensesMap[key],
+        color: CHART_COLORS[i % CHART_COLORS.length],
+        legendFontColor: isDark ? '#94a3b8' : '#64748b',
+        legendFontSize: 12,
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 4);
 
-  setChartData(data);
+    setChartData(data);
   };
 
   /**
@@ -91,3 +89,91 @@ export function useHome() {
    * @param bills - Lista com todas as contas fixas cadastradas.
    * @param paymentsMap - Dicionário de pagamentos do mês ("ID_MES_ANO": true).
    */
+  
+  const calculateFixedBills = (bills: FixedBill[], paymentsMap: Record<string, boolean>) => {
+    const total = bills.reduce((acc, b) => acc + Number(b.value), 0);
+    setFixedTotal(total);
+
+    const now = new Date();
+    const currentMonthKey = `${now.getMonth()}_${now.getFullYear()}`;
+
+    // Mantém somente contas sem registo de liquidação no mês corrente
+    const unpaid = bills.filter((b) => !paymentsMap[`${b.id}_${currentMonthKey}`]);
+    const sortedUnpaid = unpaid.sort((a, b) => a.dueDay - b.dueDay);
+
+    setNextBills(sortedUnpaid);
+  };
+
+  /**
+   * Executa a leitura assíncrona dos dados consolidados no AsyncStorage.
+   */
+  const loadDashboardData = async () => {
+    try {
+      const [transJson, billsJson, paymentsJson] = await Promise.all([
+        AsyncStorage.getItem('@myfinance:transactions'),
+        AsyncStorage.getItem('@myfinance:fixed_bills'),
+        AsyncStorage.getItem('@myfinance:bill_payments'),
+      ]);
+
+      const transactions: Transaction[] = transJson ? JSON.parse(transJson) : [];
+      const bills: FixedBill[] = billsJson ? JSON.parse(billsJson) : [];
+      const paymentsMap = paymentsJson ? JSON.parse(paymentsJson) : {};
+
+      calculateBalanceAndChart(transactions);
+      calculateFixedBills(bills, paymentsMap);
+    } catch (error) {
+      console.log('Erro ao carregar dados do dashboard:', error);
+    }
+  };
+
+  /**
+   * Dispara o recarregamento dos dados financeiros sempre que o utilizador visualiza a tela.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      loadDashboardData();
+    }, [isVisible])
+  );
+
+  /**
+   * Realiza o encerramento da sessão:
+   * Remove a chave de autenticação do AsyncStorage e redireciona para a tela de Login.
+   */
+  const handleLogout = () => {
+    setMenuVisible(false);
+    Alert.alert('Sair', 'Deseja realmente sair da sua conta?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Sair',
+        style: 'destructive',
+        onPress: async () => {
+          await AsyncStorage.removeItem('@myfinance:logged');
+          navigation.replace('Login');
+        },
+      },
+    ]);
+  };
+
+  /**
+   * Máscara formatadora monetária conectada ao contexto de privacidade do app.
+   */
+  const renderValue = (val: number) => formatPrivateValue(val, isVisible);
+
+  return {
+    navigation,
+    theme,
+    isDark,
+    toggleTheme,
+    isVisible,
+    toggleVisibility,
+    balance,
+    monthExpense,
+    fixedTotal,
+    chartData,
+    nextBills,
+    menuVisible,
+    setMenuVisible,
+    handleLogout,
+    renderValue,
+  };
+}
