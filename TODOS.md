@@ -27,5 +27,3 @@ Normalização de Strings: Implementar expressões regulares (Regex) para remove
 Sistema de Mapeamento (De/Para): Criar uma estrutura de dados relacional (Dicionário de Palavras-chave) que associe fragmentos de texto a categorias mapeadas.
 
 Regra de Aprendizado Contínuo: Quando uma transação for importada com nome desconhecido, o sistema deve categorizá-la como "Pendente" ou "Outros". Ao categorizar manualmente pela primeira vez, o aplicativo deve perguntar se o usuário deseja salvar essa regra de associação para os próximos lançamentos.
-
-18.06.26 - Zero atualização no aplicativo. 
