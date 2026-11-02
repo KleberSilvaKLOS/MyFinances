@@ -1,7 +1,7 @@
 /**
  * ============================================================================
  * HOOK CUSTOMIZADO: useSummary
- * Centraliza o agrupamento mensal, agregação por categorias e cálculo de balanço.
+ * Agrupamento de despesas por categoria, taxas de economia e histórico mensal.
  * ============================================================================
  */
 
@@ -11,57 +11,66 @@ import { useFocusEffect } from '@react-navigation/native';
 
 import { useTheme } from '../../context/ThemeContext';
 import { formatPrivateValue } from '../../utils/formatters';
-import {
-  Transaction,
-  CategorySummary,
-  SummaryChartItem,
-  PeriodBalance,
-  SUMMARY_COLORS,
-} from './types';
+import { Transaction } from '../../@types/finance';
+import { CreditCard, CardPurchase } from '../cards/types';
+import { calculateAllCardsActiveInstallments } from '../../utils/cardCalculations';
+
+export interface CategorySummaryItem {
+  category: string;
+  total: number;
+  percentage: number;
+  color: string;
+}
+
+const CATEGORY_COLORS: Record<string, string> = {
+  Alimentação: '#f59e0b',
+  Moradia: '#3b82f6',
+  Transporte: '#10b981',
+  Lazer: '#ec4899',
+  Saúde: '#06b6d4',
+  Educação: '#8b5cf6',
+  Cartão: '#6366f1',
+  Outros: '#64748b',
+};
 
 export function useSummary() {
   const { theme, isDark, isVisible, toggleVisibility } = useTheme();
 
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [cards, setCards] = useState<CreditCard[]>([]);
+  const [purchases, setPurchases] = useState<CardPurchase[]>([]);
 
-  /**
-   * Carrega o histórico completo de transações do AsyncStorage.
-   */
-  const loadTransactions = async () => {
+  const loadSummaryData = async () => {
     try {
-      const stored = await AsyncStorage.getItem('@myfinance:transactions');
-      if (stored) {
-        setTransactions(JSON.parse(stored));
-      }
+      const [storedTrans, storedCards, storedPurchases] = await Promise.all([
+        AsyncStorage.getItem('@myfinance:transactions'),
+        AsyncStorage.getItem('@myfinance:credit_cards'),
+        AsyncStorage.getItem('@myfinance:card_purchases'),
+      ]);
+
+      if (storedTrans) setTransactions(JSON.parse(storedTrans));
+      if (storedCards) setCards(JSON.parse(storedCards));
+      if (storedPurchases) setPurchases(JSON.parse(storedPurchases));
     } catch (error) {
-      console.log('Erro ao carregar transações no resumo:', error);
+      console.log('Erro ao carregar dados do resumo:', error);
     }
   };
 
   useFocusEffect(
     useCallback(() => {
-      loadTransactions();
+      loadSummaryData();
     }, [])
   );
 
-  /**
-   * Navega para o mês anterior.
-   */
   const handlePrevMonth = () => {
     setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   };
 
-  /**
-   * Navega para o próximo mês.
-   */
   const handleNextMonth = () => {
     setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   };
 
-  /**
-   * Texto formatado do mês e ano em exibição (ex: "Outubro de 2026").
-   */
   const formattedMonth = useMemo(() => {
     return currentDate.toLocaleDateString('pt-BR', {
       month: 'long',
@@ -70,83 +79,78 @@ export function useSummary() {
   }, [currentDate]);
 
   /**
-   * Filtra apenas as transações correspondentes ao mês e ano selecionados.
+   * Filtra lançamentos e parcelas de cartão para a competência selecionada.
    */
-  const monthlyTransactions = useMemo(() => {
-    const targetMonth = currentDate.getMonth();
-    const targetYear = currentDate.getFullYear();
+  const monthData = useMemo(() => {
+    const selMonth = currentDate.getMonth();
+    const selYear = currentDate.getFullYear();
 
-    return transactions.filter((item) => {
-      if (!item.date) return false;
-      const [d, m, y] = item.date.split('/').map(Number);
-      return m - 1 === targetMonth && y === targetYear;
-    });
-  }, [transactions, currentDate]);
-
-  /**
-   * Balanço do período: Total de Entradas, Total de Saídas e Saldo Líquido.
-   */
-  const balance: PeriodBalance = useMemo(() => {
     let income = 0;
-    let expense = 0;
+    let directExpense = 0;
+    const categoryTotals: Record<string, number> = {};
 
-    monthlyTransactions.forEach((item) => {
-      const val = Number(item.value || 0);
-      if (item.type === 'income') {
-        income += val;
-      } else {
-        expense += val;
+    transactions.forEach((tx) => {
+      let txDate: Date | null = null;
+      if (tx.date) {
+        if (tx.date.includes('/')) {
+          const [d, m, y] = tx.date.split('/').map(Number);
+          txDate = new Date(y, m - 1, d);
+        } else {
+          txDate = new Date(tx.date);
+        }
+      }
+
+      if (txDate && txDate.getMonth() === selMonth && txDate.getFullYear() === selYear) {
+        const val = Number(tx.value || 0);
+        if (tx.type === 'income') {
+          income += val;
+        } else {
+          directExpense += val;
+          const cat = tx.category || 'Outros';
+          categoryTotals[cat] = (categoryTotals[cat] || 0) + val;
+        }
       }
     });
 
-    return {
-      totalIncome: income,
-      totalExpense: expense,
-      netBalance: income - expense,
-    };
-  }, [monthlyTransactions]);
+    // Soma as parcelas ativas de cartões de crédito na competência
+    const { items: cardItems, total: cardTotal } = calculateAllCardsActiveInstallments(
+      cards,
+      purchases,
+      currentDate
+    );
 
-  /**
-   * Agrupa e totaliza as despesas por categoria, calculando suas porcentagens.
-   */
-  const categorySummaries: CategorySummary[] = useMemo(() => {
-    const expenses = monthlyTransactions.filter((item) => item.type === 'expense');
-    if (expenses.length === 0 || balance.totalExpense === 0) return [];
+    if (cardTotal > 0) {
+      categoryTotals['Cartão'] = (categoryTotals['Cartão'] || 0) + cardTotal;
+    }
 
-    const map: Record<string, number> = {};
+    const totalExpense = directExpense + cardTotal;
+    const balance = income - totalExpense;
+    const savingsRate = income > 0 ? Math.max(0, Math.round((balance / income) * 100)) : 0;
 
-    expenses.forEach((item) => {
-      const val = Number(item.value || 0);
-      const cat = item.description.trim() || 'Outros';
-      map[cat] = (map[cat] || 0) + val;
-    });
-
-    return Object.entries(map)
-      .map(([name, total], index) => ({
-        name,
-        total,
-        percentage: Math.round((total / balance.totalExpense) * 100),
-        color: SUMMARY_COLORS[index % SUMMARY_COLORS.length],
-      }))
+    // Converte agrupamento de categorias para lista ordenada com percentual
+    const categories: CategorySummaryItem[] = Object.keys(categoryTotals)
+      .map((cat) => {
+        const val = categoryTotals[cat];
+        return {
+          category: cat,
+          total: val,
+          percentage: totalExpense > 0 ? Math.round((val / totalExpense) * 100) : 0,
+          color: CATEGORY_COLORS[cat] || '#64748b',
+        };
+      })
       .sort((a, b) => b.total - a.total);
-  }, [monthlyTransactions, balance.totalExpense]);
 
-  /**
-   * Dados tratados e formatados para consumo nos gráficos (PieChart / Donut).
-   */
-  const chartData: SummaryChartItem[] = useMemo(() => {
-    return categorySummaries.map((cat) => ({
-      name: cat.name,
-      population: cat.total,
-      color: cat.color,
-      legendFontColor: isDark ? '#94a3b8' : '#64748b',
-      legendFontSize: 12,
-    }));
-  }, [categorySummaries, isDark]);
+    return {
+      income,
+      totalExpense,
+      balance,
+      savingsRate,
+      categories,
+      cardTotal,
+      cardItemsCount: cardItems.length,
+    };
+  }, [transactions, cards, purchases, currentDate]);
 
-  /**
-   * Formata os valores respeitando o modo de privacidade ativo.
-   */
   const renderValue = (val: number) => formatPrivateValue(val, isVisible);
 
   return {
@@ -155,11 +159,9 @@ export function useSummary() {
     isVisible,
     toggleVisibility,
     formattedMonth,
-    balance,
-    categorySummaries,
-    chartData,
     handlePrevMonth,
     handleNextMonth,
+    monthData,
     renderValue,
   };
 }

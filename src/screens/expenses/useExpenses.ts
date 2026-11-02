@@ -1,349 +1,193 @@
 /**
  * ============================================================================
  * HOOK CUSTOMIZADO: useExpenses
- * Centraliza as regras de negócio, persistência e gestão de lançamentos financeiros.
+ * Gerencia o CRUD de lançamentos (receitas e despesas) e sincroniza no AsyncStorage.
  * ============================================================================
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Alert, Keyboard } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 
 import { useTheme } from '../../context/ThemeContext';
 import { parseCurrencyInput, formatPrivateValue } from '../../utils/formatters';
-import { Transaction, DEFAULT_SUGGESTIONS } from './types';
+import { Transaction } from '../../@types/finance';
 
 export function useExpenses() {
   const { theme, isDark, isVisible, toggleVisibility } = useTheme();
 
-  // Estados dos dados armazenados
-  const [list, setList] = useState<Transaction[]>([]);
-  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  // Estados principais
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [search, setSearch] = useState<string>('');
 
-  // Estados de cálculo financeiro
-  const [balance, setBalance] = useState<number>(0);
-  const [totalIncome, setTotalIncome] = useState<number>(0);
-  const [totalExpense, setTotalExpense] = useState<number>(0);
-
-  // Estados de formulário e modal
-  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  // Formulário
+  const [description, setDescription] = useState<string>('');
+  const [value, setValue] = useState<string>('');
+  const [type, setType] = useState<'income' | 'expense'>('expense');
+  const [category, setCategory] = useState<string>('Alimentação');
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Campos de entrada da transação
-  const [value, setValue] = useState<string>('');
-  const [description, setDescription] = useState<string>(''); // Categoria
-  const [detail, setDetail] = useState<string>('');           // Descrição complementar
-  const [type, setType] = useState<'income' | 'expense'>('expense');
-
-  // Gestão de categorias personalizadas
-  const [newCategoryName, setNewCategoryName] = useState<string>('');
-  const [editingCategoryIndex, setEditingCategoryIndex] = useState<number | null>(null);
-
-  // Mecanismo de autocomplete / sugestões
-  const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
-
   /**
-   * Recalcula o saldo geral, somatório de receitas e de despesas
-   * sempre que o registo de transações sofrer alterações.
-   *
-   * @param currentList - Coleção atual de transações.
+   * Carrega os lançamentos salvos no AsyncStorage.
    */
-  const calculateTotals = (currentList: Transaction[]) => {
-    let total = 0;
-    let income = 0;
-    let expense = 0;
-
-    currentList.forEach((item) => {
-      const val = Number(item.value);
-      if (item.type === 'income') {
-        total += val;
-        income += val;
-      } else {
-        total -= val;
-        expense += val;
-      }
-    });
-
-    setBalance(total);
-    setTotalIncome(income);
-    setTotalExpense(expense);
-  };
-
-  useEffect(() => {
-    calculateTotals(list);
-  }, [list]);
-
-  /**
-   * Lê os dados persistidos de transações e categorias criadas.
-   */
-  const loadStoredData = async () => {
+  const loadTransactions = async () => {
     try {
-      const [transJson, catJson] = await Promise.all([
-        AsyncStorage.getItem('@myfinance:transactions'),
-        AsyncStorage.getItem('@myfinance:categories'),
-      ]);
-
-      if (transJson) setList(JSON.parse(transJson));
-      if (catJson) setCustomCategories(JSON.parse(catJson));
+      const stored = await AsyncStorage.getItem('@myfinance:transactions');
+      if (stored) {
+        setTransactions(JSON.parse(stored));
+      }
     } catch (error) {
-      console.log('Erro ao carregar lançamentos/categorias:', error);
+      console.log('Erro ao carregar transações:', error);
     }
   };
 
-  /**
-   * Recarrega os registos sempre que o ecrã recebe foco.
-   */
   useFocusEffect(
     useCallback(() => {
-      loadStoredData();
+      loadTransactions();
     }, [])
   );
 
   /**
-   * Persiste a lista atualizada de transações no armazenamento local.
-   *
-   * @param newList - Novo array de transações.
+   * Salva a lista de lançamentos no AsyncStorage e atualiza o estado local.
    */
-  const saveTransactions = async (newList: Transaction[]) => {
+  const saveTransactions = async (list: Transaction[]) => {
     try {
-      await AsyncStorage.setItem('@myfinance:transactions', JSON.stringify(newList));
-      setList(newList);
+      await AsyncStorage.setItem('@myfinance:transactions', JSON.stringify(list));
+      setTransactions(list);
     } catch (error) {
       console.log('Erro ao salvar transações:', error);
     }
   };
 
   /**
-   * Persiste a lista de categorias personalizadas no armazenamento local.
-   *
-   * @param newCategories - Novo array de categorias.
-   */
-  const saveCategories = async (newCategories: string[]) => {
-    try {
-      await AsyncStorage.setItem('@myfinance:categories', JSON.stringify(newCategories));
-      setCustomCategories(newCategories);
-    } catch (error) {
-      console.log('Erro ao salvar categorias:', error);
-    }
-  };
-
-  /**
-   * Filtra dinamicamente as sugestões de categoria à medida que o utilizador digita.
-   *
-   * @param text - Texto inserido no campo de categoria.
-   */
-  const handleDescriptionChange = (text: string) => {
-    setDescription(text);
-    if (text.length > 0) {
-      const allOptions = [...DEFAULT_SUGGESTIONS, ...customCategories];
-      const filtered = allOptions.filter((item) =>
-        item.toLowerCase().includes(text.toLowerCase())
-      );
-      setFilteredSuggestions([...new Set(filtered)]);
-      setShowSuggestions(true);
-    } else {
-      setShowSuggestions(false);
-    }
-  };
-
-  /**
-   * Aplica a sugestão selecionada no campo de categoria e oculta o dropdown.
-   *
-   * @param suggestion - Categoria selecionada.
-   */
-  const selectSuggestion = (suggestion: string) => {
-    setDescription(suggestion);
-    setShowSuggestions(false);
-  };
-
-  /**
-   * Regista um novo lançamento ou atualiza um item existente em edição.
+   * Adiciona ou edita um lançamento, compatibilizando 'value' e 'amount'.
    */
   const handleSaveTransaction = () => {
-    if (value.trim() === '' || description.trim() === '') {
-      Alert.alert('Atenção', 'Preencha o valor e a categoria.');
+    const trimmedDesc = description.trim();
+    const numericValue = parseCurrencyInput(value);
+
+    if (!trimmedDesc || numericValue <= 0) {
+      Alert.alert('Atenção', 'Informe uma descrição e um valor maior que zero.');
       return;
     }
 
-    const numericValue = parseCurrencyInput(value);
     const now = new Date();
+    const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(
+      now.getMonth() + 1
+    ).padStart(2, '0')}/${now.getFullYear()}`;
 
-    let newList = [...list];
+    let updatedList: Transaction[] = [];
 
     if (editingId) {
-      newList = newList.map((item) =>
-        item.id === editingId
-          ? {
-              ...item,
-              description: description.trim(),
-              detail: detail.trim(),
-              value: numericValue,
-              type,
-            }
-          : item
-      );
+      updatedList = transactions.map((item) => {
+        if (item.id === editingId) {
+          const updatedItem = {
+            ...item,
+            description: trimmedDesc,
+            value: numericValue,
+            amount: numericValue,
+            type,
+            category: category.trim() || 'Outros',
+          } as unknown as Transaction;
+          return updatedItem;
+        }
+        return item;
+      });
       setEditingId(null);
     } else {
-      const newTransaction: Transaction = {
-        id: String(now.getTime()),
-        description: description.trim(),
-        detail: detail.trim(),
+      const newTransaction = {
+        id: String(Date.now()),
+        description: trimmedDesc,
         value: numericValue,
+        amount: numericValue,
         type,
-        date: now.toLocaleDateString('pt-BR'),
-        time: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      };
-      newList = [newTransaction, ...newList];
+        category: category.trim() || 'Outros',
+        date: formattedDate,
+      } as unknown as Transaction;
+
+      updatedList = [newTransaction, ...transactions];
     }
 
-    saveTransactions(newList);
+    saveTransactions(updatedList);
 
-    // Limpa o formulário
-    setValue('');
+    // Limpa formulário
     setDescription('');
-    setDetail('');
-    setShowSuggestions(false);
+    setValue('');
+    setCategory('Alimentação');
+    setType('expense');
     Keyboard.dismiss();
   };
 
-  /**
-   * Prepara o formulário para editar uma transação já existente.
-   *
-   * @param item - Transação a ser editada.
-   */
   const handleStartEdit = (item: Transaction) => {
+    const val = item.value ?? (item as any).amount ?? 0;
     setEditingId(item.id);
     setDescription(item.description);
-    setDetail(item.detail || '');
-    setValue(String(item.value));
+    setValue(String(val));
     setType(item.type);
+    setCategory(item.category || 'Alimentação');
   };
 
-  /**
-   * Remove permanentemente uma transação após confirmação do utilizador.
-   *
-   * @param id - Identificador único da transação.
-   */
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setDescription('');
+    setValue('');
+    setType('expense');
+    setCategory('Alimentação');
+    Keyboard.dismiss();
+  };
+
   const handleDeleteTransaction = (id: string) => {
-    Alert.alert(
-      'Excluir Lançamento',
-      'Tem certeza de que deseja apagar este item permanentemente?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Apagar',
-          style: 'destructive',
-          onPress: () => {
-            const newList = list.filter((item) => item.id !== id);
-            saveTransactions(newList);
-
-            if (editingId === id) {
-              setEditingId(null);
-              setValue('');
-              setDescription('');
-              setDetail('');
-            }
-          },
+    Alert.alert('Excluir Lançamento', 'Deseja remover este registro?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Excluir',
+        style: 'destructive',
+        onPress: () => {
+          const updatedList = transactions.filter((t) => t.id !== id);
+          saveTransactions(updatedList);
+          if (editingId === id) handleCancelEdit();
         },
-      ]
-    );
+      },
+    ]);
   };
 
   /**
-   * Cria uma nova categoria personalizada ou atualiza o nome de uma categoria existente.
+   * Filtra lançamentos pela busca de texto.
    */
-  const handleAddOrUpdateCategory = () => {
-    const trimmed = newCategoryName.trim();
-    if (trimmed === '') return Alert.alert('Erro', 'Digite o nome da categoria.');
+  const filteredTransactions = useMemo(() => {
+    if (!search.trim()) return transactions;
+    const term = search.toLowerCase();
+    return transactions.filter(
+      (t) =>
+        t.description.toLowerCase().includes(term) ||
+        (t.category && t.category.toLowerCase().includes(term))
+    );
+  }, [transactions, search]);
 
-    const updatedCategories = [...customCategories];
+  /**
+   * Totais de entradas, saídas e saldo líquido.
+   */
+  const { totalIncome, totalExpense, balance } = useMemo(() => {
+    let income = 0;
+    let expense = 0;
 
-    if (editingCategoryIndex !== null) {
-      updatedCategories[editingCategoryIndex] = trimmed;
-      setEditingCategoryIndex(null);
-      Alert.alert('Sucesso', 'Categoria atualizada!');
-    } else {
-      if (updatedCategories.includes(trimmed)) {
-        return Alert.alert('Erro', 'Esta categoria já existe.');
+    transactions.forEach((t) => {
+      const val = Number(t.value ?? (t as any).amount ?? 0);
+      if (t.type === 'income') {
+        income += val;
+      } else {
+        expense += val;
       }
-      updatedCategories.push(trimmed);
-      Alert.alert('Sucesso', 'Categoria adicionada!');
-    }
+    });
 
-    saveCategories(updatedCategories);
-    setNewCategoryName('');
-  };
+    return {
+      totalIncome: income,
+      totalExpense: expense,
+      balance: income - expense,
+    };
+  }, [transactions]);
 
-  /**
-   * Inicia a edição de uma categoria no modal lateral.
-   *
-   * @param index - Índice da categoria na lista.
-   */
-  const handleEditCategory = (index: number) => {
-    setNewCategoryName(customCategories[index]);
-    setEditingCategoryIndex(index);
-  };
-
-  /**
-   * Remove uma categoria personalizada após confirmação.
-   *
-   * @param index - Índice da categoria a ser excluída.
-   */
-  const handleDeleteCategory = (index: number) => {
-    Alert.alert(
-      'Excluir Categoria',
-      `Deseja apagar a categoria "${customCategories[index]}"?`,
-      [
-        { text: 'Não', style: 'cancel' },
-        {
-          text: 'Sim',
-          style: 'destructive',
-          onPress: () => {
-            const updated = customCategories.filter((_, i) => i !== index);
-            saveCategories(updated);
-
-            if (editingCategoryIndex === index) {
-              setEditingCategoryIndex(null);
-              setNewCategoryName('');
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  /**
-   * Limpa permanentemente todos os lançamentos e categorias do AsyncStorage e do estado.
-   * Corrige a falha anterior em que os dados apenas sumiam da memória temporária.
-   */
-  const handleResetApp = () => {
-    Alert.alert(
-      'Resetar',
-      'Apagar TUDO (Lançamentos e Categorias)?',
-      [
-        { text: 'Não', style: 'cancel' },
-        {
-          text: 'Sim',
-          style: 'destructive',
-          onPress: async () => {
-            await Promise.all([
-              AsyncStorage.removeItem('@myfinance:transactions'),
-              AsyncStorage.removeItem('@myfinance:categories'),
-            ]);
-            setList([]);
-            setCustomCategories([]);
-            setModalVisible(false);
-          },
-        },
-      ]
-    );
-  };
-
-  /**
-   * Máscara de valor financeiro baseada no estado de privacidade do utilizador.
-   */
   const renderValue = (val: number) => formatPrivateValue(val, isVisible);
 
   return {
@@ -351,35 +195,26 @@ export function useExpenses() {
     isDark,
     isVisible,
     toggleVisibility,
-    list,
-    customCategories,
-    balance,
-    totalIncome,
-    totalExpense,
-    modalVisible,
-    setModalVisible,
-    editingId,
+    transactions,
+    filteredTransactions,
+    search,
+    setSearch,
+    description,
+    setDescription,
     value,
     setValue,
-    description,
-    detail,
-    setDetail,
     type,
     setType,
-    newCategoryName,
-    setNewCategoryName,
-    editingCategoryIndex,
-    filteredSuggestions,
-    showSuggestions,
-    handleDescriptionChange,
-    selectSuggestion,
+    category,
+    setCategory,
+    editingId,
+    totalIncome,
+    totalExpense,
+    balance,
     handleSaveTransaction,
     handleStartEdit,
+    handleCancelEdit,
     handleDeleteTransaction,
-    handleAddOrUpdateCategory,
-    handleEditCategory,
-    handleDeleteCategory,
-    handleResetApp,
     renderValue,
   };
 }

@@ -1,7 +1,7 @@
 /**
  * ============================================================================
- * TELA HOME (Restaurada e Otimizada)
- * Ícone de configurações, layout refinado e card de pendências em preto.
+ * TELA HOME
+ * Visão consolidada de saldo, despesas fixas em card escuro e parcelas de cartão.
  * ============================================================================
  */
 
@@ -39,6 +39,14 @@ export default function HomeScreen() {
     renderValue,
   } = useHome();
 
+  const handleOpenSettings = () => {
+    if (navigation.getParent()) {
+      navigation.getParent().navigate('Settings');
+    } else {
+      navigation.navigate('Settings');
+    }
+  };
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
@@ -57,7 +65,6 @@ export default function HomeScreen() {
             <Text style={styles.headerTitle}>Meu Balanço</Text>
           </View>
 
-          {/* Botões de Ação do Header */}
           <View style={styles.headerActions}>
             <TouchableOpacity onPress={toggleVisibility} style={styles.headerIconBtn}>
               <Ionicons
@@ -67,15 +74,7 @@ export default function HomeScreen() {
               />
             </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => {
-                // Navega para configurações ou abre menu se houver rota configurada
-                if (navigation.canGoBack && navigation.getState().routeNames.includes('Settings')) {
-                  navigation.navigate('Settings');
-                }
-              }}
-              style={styles.headerIconBtn}
-            >
+            <TouchableOpacity onPress={handleOpenSettings} style={styles.headerIconBtn}>
               <Feather name="settings" size={20} color="#ffffff" />
             </TouchableOpacity>
           </View>
@@ -107,7 +106,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* --- CARD DE COMPROMISSOS DO MÊS --- */}
+        {/* --- CARD COMPROMISSOS DO MÊS --- */}
         <View style={[styles.summaryBox, { backgroundColor: theme.card }]}>
           <View style={styles.summaryBoxTop}>
             <Text style={[styles.summaryBoxTitle, { color: theme.text }]}>
@@ -143,7 +142,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* --- BLOCO EM PRETO: CONTAS FIXAS PENDENTES --- */}
+        {/* --- BLOCO PRETO: CONTAS FIXAS PENDENTES --- */}
         <View style={styles.blackSectionContainer}>
           <View style={styles.blackCardWrapper}>
             <View style={styles.blackCardHeader}>

@@ -1,7 +1,7 @@
 /**
  * ============================================================================
- * TELA DE GASTOS / LANÇAMENTOS
- * Camada de apresentação visual conectada ao hook useExpenses.
+ * TELA DE LANÇAMENTOS E GASTOS (Atualizada e Padronizada)
+ * Registro de receitas/despesas, busca textual e listagem detalhada.
  * ============================================================================
  */
 
@@ -12,15 +12,23 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Modal,
-  Pressable,
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialIcons, Ionicons, Feather } from '@expo/vector-icons';
 
 import { useExpenses } from './useExpenses';
 import { styles } from './styles';
+
+const DEFAULT_CATEGORIES = [
+  'Alimentação',
+  'Moradia',
+  'Transporte',
+  'Lazer',
+  'Saúde',
+  'Educação',
+  'Outros',
+];
 
 export default function ExpensesScreen() {
   const {
@@ -28,35 +36,25 @@ export default function ExpensesScreen() {
     isDark,
     isVisible,
     toggleVisibility,
-    list,
-    customCategories,
-    balance,
-    totalIncome,
-    totalExpense,
-    modalVisible,
-    setModalVisible,
-    editingId,
+    filteredTransactions,
+    search,
+    setSearch,
+    description,
+    setDescription,
     value,
     setValue,
-    description,
-    detail,
-    setDetail,
     type,
     setType,
-    newCategoryName,
-    setNewCategoryName,
-    editingCategoryIndex,
-    filteredSuggestions,
-    showSuggestions,
-    handleDescriptionChange,
-    selectSuggestion,
+    category,
+    setCategory,
+    editingId,
+    totalIncome,
+    totalExpense,
+    balance,
     handleSaveTransaction,
     handleStartEdit,
+    handleCancelEdit,
     handleDeleteTransaction,
-    handleAddOrUpdateCategory,
-    handleEditCategory,
-    handleDeleteCategory,
-    handleResetApp,
     renderValue,
   } = useExpenses();
 
@@ -70,186 +68,113 @@ export default function ExpensesScreen() {
         backgroundColor={theme.header}
       />
 
-      {/* --- MODAL LATERAL DE CATEGORIAS --- */}
-      <Modal
-        animationType="slide"
-        transparent
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <Pressable
-            style={styles.modalBackdrop}
-            onPress={() => setModalVisible(false)}
-          />
-          <View style={[styles.sideMenu, { backgroundColor: theme.modal }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.text }]}>Categorias</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={24} color={theme.text} />
-              </TouchableOpacity>
-            </View>
-
-            <Text style={[styles.inputLabel, { color: theme.text }]}>
-              {editingCategoryIndex !== null ? 'Editar Categoria' : 'Nova Categoria'}
-            </Text>
-
-            <View style={styles.addCategoryRow}>
-              <TextInput
-                style={[
-                  styles.modalInput,
-                  { backgroundColor: theme.input, color: theme.text },
-                ]}
-                placeholder="Ex: Pet Shop"
-                placeholderTextColor={theme.subtext}
-                value={newCategoryName}
-                onChangeText={setNewCategoryName}
-              />
-              <TouchableOpacity
-                style={styles.btnAddCategory}
-                onPress={handleAddOrUpdateCategory}
-              >
-                <MaterialIcons
-                  name={editingCategoryIndex !== null ? 'check' : 'add'}
-                  size={24}
-                  color="#fff"
-                />
-              </TouchableOpacity>
-            </View>
-
-            <View
-              style={[
-                styles.categoryListContainer,
-                { borderColor: theme.border, backgroundColor: theme.card },
-              ]}
-            >
-              <ScrollView showsVerticalScrollIndicator={false}>
-                {customCategories.length === 0 ? (
-                  <Text style={{ color: theme.subtext, textAlign: 'center', marginVertical: 20 }}>
-                    Nenhuma categoria personalizada.
-                  </Text>
-                ) : (
-                  customCategories.map((cat, index) => (
-                    <View
-                      key={index}
-                      style={[styles.categoryItem, { borderBottomColor: theme.border }]}
-                    >
-                      <Text style={{ color: theme.text, fontSize: 16 }}>{cat}</Text>
-                      <View style={{ flexDirection: 'row', gap: 10 }}>
-                        <TouchableOpacity onPress={() => handleEditCategory(index)}>
-                          <MaterialIcons name="edit" size={20} color="#fbbf24" />
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => handleDeleteCategory(index)}>
-                          <MaterialIcons name="delete" size={20} color="#ef4444" />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  ))
-                )}
-              </ScrollView>
-            </View>
-
-            <TouchableOpacity style={styles.btnDelete} onPress={handleResetApp}>
-              <MaterialIcons name="delete-forever" size={22} color="#ef4444" />
-              <Text style={{ color: '#ef4444', fontWeight: 'bold' }}>Resetar App</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* --- CABEÇALHO COM RESUMO FINANCEIRO --- */}
-      <View style={[styles.summaryContainer, { backgroundColor: theme.header }]}>
-        <View style={styles.headerContent}>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={styles.summaryLabel}>Saldo Atual</Text>
-            <Text style={styles.summaryAmount}>{renderValue(balance)}</Text>
-          </View>
-
-          <View style={styles.headerRightActions}>
-            <TouchableOpacity onPress={toggleVisibility} style={styles.btnEyeHeader}>
-              <Ionicons
-                name={isVisible ? 'eye' : 'eye-off'}
-                size={24}
-                color="#ffffff"
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setModalVisible(true)}
-              style={styles.btnAddHeader}
-            >
-              <MaterialIcons name="category" size={22} color="#3870d8" />
-            </TouchableOpacity>
-          </View>
+      {/* --- CABEÇALHO --- */}
+      <View style={[styles.header, { backgroundColor: theme.header }]}>
+        <View style={styles.headerTop}>
+          <Text style={styles.headerTitle}>Lançamentos</Text>
+          <TouchableOpacity onPress={toggleVisibility} style={styles.headerIconBtn}>
+            <Ionicons
+              name={isVisible ? 'eye' : 'eye-off'}
+              size={20}
+              color="#ffffff"
+            />
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.row}>
-          <View style={styles.summaryMiniCard}>
+        <Text style={styles.balanceLabel}>Balanço de Movimentações</Text>
+        <Text style={styles.balanceValue}>{renderValue(balance)}</Text>
+
+        <View style={styles.indicatorsRow}>
+          <View style={styles.indicatorItem}>
             <MaterialIcons name="arrow-upward" size={16} color="#13ec6d" />
-            <Text style={styles.miniCardText}>{renderValue(totalIncome)}</Text>
+            <Text style={styles.indicatorLabel}>Entradas:</Text>
+            <Text style={[styles.indicatorVal, { color: '#13ec6d' }]}>
+              {renderValue(totalIncome)}
+            </Text>
           </View>
 
-          <View style={styles.summaryMiniCard}>
+          <View style={styles.indicatorItem}>
             <MaterialIcons name="arrow-downward" size={16} color="#ef4444" />
-            <Text style={styles.miniCardText}>{renderValue(totalExpense)}</Text>
+            <Text style={styles.indicatorLabel}>Saídas:</Text>
+            <Text style={[styles.indicatorVal, { color: '#ef4444' }]}>
+              {renderValue(totalExpense)}
+            </Text>
           </View>
         </View>
       </View>
 
-      {/* --- FORMULÁRIO DE ENTRADA RÁPIDA --- */}
-      <View style={[styles.mainInputContainer, { backgroundColor: theme.card }]}>
-        <View style={styles.quickTypeSelector}>
-          <TouchableOpacity
-            style={[
-              styles.quickTypeBtn,
-              { borderColor: theme.border },
-              type === 'income' && styles.quickIncomeActive,
-            ]}
-            onPress={() => setType('income')}
-          >
-            <MaterialIcons
-              name="arrow-upward"
-              size={18}
-              color={type === 'income' ? '#fff' : '#13ec6d'}
-            />
-            <Text
-              style={[
-                styles.quickTypeText,
-                { color: type === 'income' ? '#fff' : theme.text },
-              ]}
-            >
-              Entrada
-            </Text>
-          </TouchableOpacity>
+      {/* --- FORMULÁRIO DE LANÇAMENTO --- */}
+      <View style={[styles.formCard, { backgroundColor: theme.card }]}>
+        <Text style={[styles.formTitle, { color: theme.text }]}>
+          {editingId ? 'Editar Movimentação' : 'Nova Movimentação'}
+        </Text>
 
+        {/* Alternador: Despesa / Receita */}
+        <View style={styles.typeSelectorRow}>
           <TouchableOpacity
             style={[
-              styles.quickTypeBtn,
-              { borderColor: theme.border },
-              type === 'expense' && styles.quickExpenseActive,
+              styles.typeButton,
+              type === 'expense' && { backgroundColor: '#ef4444' },
             ]}
             onPress={() => setType('expense')}
           >
             <MaterialIcons
               name="arrow-downward"
-              size={18}
-              color={type === 'expense' ? '#fff' : '#ef4444'}
+              size={16}
+              color={type === 'expense' ? '#fff' : theme.subtext}
             />
             <Text
               style={[
-                styles.quickTypeText,
-                { color: type === 'expense' ? '#fff' : theme.text },
+                styles.typeButtonText,
+                { color: type === 'expense' ? '#fff' : theme.subtext },
               ]}
             >
-              Saída
+              Despesa
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.typeButton,
+              type === 'income' && { backgroundColor: '#13ec6d' },
+            ]}
+            onPress={() => setType('income')}
+          >
+            <MaterialIcons
+              name="arrow-upward"
+              size={16}
+              color={type === 'income' ? '#fff' : theme.subtext}
+            />
+            <Text
+              style={[
+                styles.typeButtonText,
+                { color: type === 'income' ? '#fff' : theme.subtext },
+              ]}
+            >
+              Receita
             </Text>
           </TouchableOpacity>
         </View>
 
-        <View style={[styles.valueInputWrapper, { borderBottomColor: theme.border }]}>
-          <Text style={styles.currencyPrefix}>R$</Text>
+        {/* Inputs Descrição e Valor */}
+        <View style={styles.inputsRow}>
           <TextInput
-            style={[styles.mainValueInput, { color: theme.text }]}
-            placeholder="0,00"
+            style={[
+              styles.input,
+              { flex: 2, backgroundColor: theme.input, color: theme.text },
+            ]}
+            placeholder="Descrição (ex: Mercado, Salário)"
+            placeholderTextColor={theme.subtext}
+            value={description}
+            onChangeText={setDescription}
+          />
+
+          <TextInput
+            style={[
+              styles.input,
+              { flex: 1.2, backgroundColor: theme.input, color: theme.text },
+            ]}
+            placeholder="Valor R$"
             placeholderTextColor={theme.subtext}
             keyboardType="numeric"
             value={value}
@@ -257,147 +182,175 @@ export default function ExpensesScreen() {
           />
         </View>
 
-        <View style={styles.descInputWrapper}>
-          <TextInput
-            style={[
-              styles.descInputCat,
-              { backgroundColor: theme.input, color: theme.text },
-            ]}
-            placeholder="Categoria"
-            placeholderTextColor={theme.subtext}
-            value={description}
-            onChangeText={handleDescriptionChange}
-          />
+        {/* Pílulas de Categoria Rápida */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryScroll}
+        >
+          {DEFAULT_CATEGORIES.map((cat) => {
+            const isSelected = category === cat;
+            return (
+              <TouchableOpacity
+                key={cat}
+                style={[
+                  styles.categoryChip,
+                  {
+                    backgroundColor: isSelected
+                      ? '#3870d8'
+                      : isDark
+                      ? '#1e293b'
+                      : '#f1f5f9',
+                  },
+                ]}
+                onPress={() => setCategory(cat)}
+              >
+                <Text
+                  style={[
+                    styles.categoryChipText,
+                    { color: isSelected ? '#ffffff' : theme.subtext },
+                  ]}
+                >
+                  {cat}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
 
-          <TextInput
-            style={[
-              styles.descInput,
-              { backgroundColor: theme.input, color: theme.text },
-            ]}
-            placeholder="Descrição (opcional)"
-            placeholderTextColor={theme.subtext}
-            value={detail}
-            onChangeText={setDetail}
-          />
+        {/* Botões Salvar / Cancelar */}
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+          {editingId && (
+            <TouchableOpacity
+              style={[styles.btnAction, { flex: 1, backgroundColor: '#64748b' }]}
+              onPress={handleCancelEdit}
+            >
+              <Text style={styles.btnActionText}>Cancelar</Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={[
-              styles.confirmBtn,
-              editingId ? { backgroundColor: '#fbbf24' } : null,
+              styles.btnAction,
+              { flex: 2 },
+              editingId ? { backgroundColor: '#fbbf24' } : { backgroundColor: '#3870d8' },
             ]}
             onPress={handleSaveTransaction}
           >
             <MaterialIcons
               name={editingId ? 'check' : 'add'}
-              size={24}
+              size={20}
               color="#fff"
             />
+            <Text style={styles.btnActionText}>
+              {editingId ? 'Salvar Alteração' : 'Registrar Lançamento'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* --- DROPDOWN DE AUTOCOMPLETE DE CATEGORIAS --- */}
-      {showSuggestions && filteredSuggestions.length > 0 && (
-        <View
-          style={[
-            styles.suggestionsBox,
-            { backgroundColor: theme.card, borderColor: theme.border },
-          ]}
-        >
-          <ScrollView keyboardShouldPersistTaps="handled">
-            {filteredSuggestions.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[styles.suggestionItem, { borderBottomColor: theme.border }]}
-                onPress={() => selectSuggestion(item)}
-              >
-                <Text style={{ color: theme.text }}>{item}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-
-      {/* --- LISTAGEM DE LANÇAMENTOS --- */}
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.listContainer}>
-          <Text style={[styles.listTitle, { color: theme.text }]}>Lançamentos</Text>
-
-          {list.length === 0 ? (
-            <Text style={{ color: theme.subtext, textAlign: 'center', marginTop: 30 }}>
-              Nenhuma transação cadastrada.
-            </Text>
-          ) : (
-            list.map((item) => {
-              const isIncome = item.type === 'income';
-              const isEditing = item.id === editingId;
-
-              return (
-                <View
-                  key={item.id}
-                  style={[
-                    styles.itemCard,
-                    { backgroundColor: theme.itemCard },
-                    isEditing && styles.itemCardEditing,
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.itemIconContainer,
-                      { backgroundColor: theme.itemIconBg },
-                    ]}
-                  >
-                    <MaterialIcons
-                      name={isIncome ? 'arrow-upward' : 'arrow-downward'}
-                      size={20}
-                      color={isIncome ? '#13ec6d' : '#ef4444'}
-                    />
-                  </View>
-
-                  <View style={styles.itemInfo}>
-                    <Text style={[styles.itemTitle, { color: '#fff' }]}>
-                      {item.description}
-                    </Text>
-                    {item.detail ? (
-                      <Text style={[styles.itemDetail, { color: '#ffffffaa' }]}>
-                        {item.detail}
-                      </Text>
-                    ) : null}
-                    <Text style={styles.itemCategory}>
-                      {item.date} {item.time ? `às ${item.time}` : ''}
-                    </Text>
-                  </View>
-
-                  <View style={{ alignItems: 'flex-end', gap: 6 }}>
-                    <Text
-                      style={[
-                        styles.itemValue,
-                        { color: isIncome ? '#13ec6d' : '#fff' },
-                      ]}
-                    >
-                      {isIncome ? '+ ' : '- '}
-                      {renderValue(item.value)}
-                    </Text>
-
-                    <View style={{ flexDirection: 'row', gap: 12 }}>
-                      <TouchableOpacity onPress={() => handleStartEdit(item)}>
-                        <MaterialIcons name="edit" size={18} color="#ffffffcc" />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => handleDeleteTransaction(item.id)}
-                      >
-                        <MaterialIcons name="delete" size={18} color="#ef4444" />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-              );
-            })
+      {/* --- CAMPO DE BUSCA --- */}
+      <View style={styles.searchContainer}>
+        <View style={[styles.searchBox, { backgroundColor: theme.card }]}>
+          <Feather name="search" size={18} color={theme.subtext} />
+          <TextInput
+            style={[styles.searchInput, { color: theme.text }]}
+            placeholder="Filtrar lançamentos..."
+            placeholderTextColor={theme.subtext}
+            value={search}
+            onChangeText={setSearch}
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')}>
+              <Ionicons name="close-circle" size={18} color={theme.subtext} />
+            </TouchableOpacity>
           )}
         </View>
+      </View>
+
+      {/* --- LISTAGEM DE MOVIMENTAÇÕES --- */}
+      <ScrollView
+        contentContainerStyle={styles.scrollList}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={[styles.listHeaderTitle, { color: theme.text }]}>
+          Histórico ({filteredTransactions.length})
+        </Text>
+
+        {filteredTransactions.length === 0 ? (
+          <View style={[styles.emptyContainer, { backgroundColor: theme.card }]}>
+            <Feather name="inbox" size={30} color={theme.subtext} />
+            <Text style={[styles.emptyText, { color: theme.subtext }]}>
+              Nenhum lançamento encontrado.
+            </Text>
+          </View>
+        ) : (
+          filteredTransactions.map((item) => {
+            const isExpense = item.type === 'expense';
+            const numVal = Number(item.value ?? (item as any).amount ?? 0);
+
+            return (
+              <View
+                key={item.id}
+                style={[styles.transactionCard, { backgroundColor: theme.card }]}
+              >
+                <View
+                  style={[
+                    styles.typeIconBox,
+                    {
+                      backgroundColor: isExpense
+                        ? 'rgba(239, 68, 68, 0.12)'
+                        : 'rgba(19, 236, 109, 0.12)',
+                    },
+                  ]}
+                >
+                  <MaterialIcons
+                    name={isExpense ? 'arrow-downward' : 'arrow-upward'}
+                    size={20}
+                    color={isExpense ? '#ef4444' : '#13ec6d'}
+                  />
+                </View>
+
+                <View style={styles.txInfo}>
+                  <Text style={[styles.txDescription, { color: theme.text }]} numberOfLines={1}>
+                    {item.description}
+                  </Text>
+                  <View style={styles.txMetaRow}>
+                    <View style={styles.categoryBadge}>
+                      <Text style={styles.categoryBadgeText}>
+                        {item.category || 'Geral'}
+                      </Text>
+                    </View>
+                    <Text style={[styles.txDate, { color: theme.subtext }]}>
+                      {item.date || 'Hoje'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.txValueCol}>
+                  <Text
+                    style={[
+                      styles.txValue,
+                      { color: isExpense ? '#ef4444' : '#13ec6d' },
+                    ]}
+                  >
+                    {isExpense ? '- ' : '+ '}
+                    {renderValue(numVal)}
+                  </Text>
+
+                  <View style={styles.txActions}>
+                    <TouchableOpacity onPress={() => handleStartEdit(item)}>
+                      <MaterialIcons name="edit" size={17} color="#fbbf24" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDeleteTransaction(item.id)}>
+                      <MaterialIcons name="delete" size={17} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            );
+          })
+        )}
       </ScrollView>
     </SafeAreaView>
   );

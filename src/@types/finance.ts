@@ -13,6 +13,7 @@
  */
 
 export interface Transaction {
+  [x: string]: string;
   id: string; // Identificador único (timestamp em string)
   description: string; // Nome da categoria principal (ex: "Mercado", "Salário", "Aluguel" )
   detail?: string; // Detalhe opcional (ex: "Compra da semana")

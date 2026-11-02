@@ -1,297 +1,253 @@
-import { StyleSheet, Platform, StatusBar } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export const styles = StyleSheet.create({
-  // --- ESTRUTURA GLOBAL ---
   container: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: 100,
-  },
 
-  // --- CABEÇALHO E RESUMO (SUMMARY) ---
-  summaryContainer: {
+  // --- CABEÇALHO ---
+  header: {
     padding: 20,
     paddingTop: 15,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
-    paddingBottom: 40,
+    paddingBottom: 22,
     elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
-  headerContent: {
+  headerTop: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    position: 'relative',
-    marginBottom: 15,
-  },
-  headerRightActions: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 12,
+    marginBottom: 12,
   },
-  btnEyeHeader: {
-    padding: 5,
-  },
-  btnAddHeader: {
-    backgroundColor: '#fff',
-    width: 45,
-    height: 45,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  summaryLabel: {
-    color: '#ffffffcc',
-    fontSize: 14,
-    textTransform: 'uppercase',
-  },
-  summaryAmount: {
+  headerTitle: {
     color: '#ffffff',
-    fontSize: 32,
+    fontSize: 22,
     fontWeight: 'bold',
   },
-  row: {
-    flexDirection: 'row',
-    gap: 15,
+  headerIconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  summaryMiniCard: {
+  balanceLabel: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  balanceValue: {
+    color: '#ffffff',
+    fontSize: 30,
+    fontWeight: 'bold',
+    marginVertical: 4,
+  },
+  indicatorsRow: {
+    flexDirection: 'row',
+    gap: 20,
+    marginTop: 8,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  indicatorItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    gap: 5,
+  },
+  indicatorLabel: {
+    color: 'rgba(255, 255, 255, 0.75)',
+    fontSize: 12,
+  },
+  indicatorVal: {
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+
+  // --- FORMULÁRIO DE LANÇAMENTO ---
+  formCard: {
+    marginHorizontal: 16,
+    marginTop: -12,
+    borderRadius: 20,
+    padding: 16,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+  formTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  typeSelectorRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+  },
+  typeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 9,
+    borderRadius: 12,
+    backgroundColor: 'rgba(150, 150, 150, 0.12)',
+  },
+  typeButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  inputsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  input: {
+    height: 44,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    fontSize: 14,
+  },
+  categoryScroll: {
+    gap: 6,
+    paddingVertical: 4,
+    marginBottom: 2,
+  },
+  categoryChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    gap: 5,
   },
-  miniCardText: {
-    color: '#fff',
+  categoryChipText: {
     fontSize: 12,
+    fontWeight: '600',
+  },
+  btnAction: {
+    height: 44,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  btnActionText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+
+  // --- BUSCA ---
+  searchContainer: {
+    paddingHorizontal: 16,
+    marginTop: 14,
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 42,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 13,
+    height: '100%',
+  },
+
+  // --- LISTAGEM ---
+  scrollList: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 100,
+  },
+  listHeaderTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 30,
+    borderRadius: 16,
+    gap: 8,
+    marginTop: 10,
+  },
+  emptyText: {
+    fontSize: 13,
     fontWeight: '500',
   },
 
-  // --- ÁREA DE ENTRADA PRINCIPAL (MAIN INPUT) ---
-  mainInputContainer: {
-    marginHorizontal: 20,
-    marginTop: -30,
-    borderRadius: 20,
-    padding: 20,
-    elevation: 8,
-    zIndex: 100,
-  },
-  quickTypeSelector: {
+  // --- CARDS DE TRANSAÇÃO ---
+  transactionCard: {
     flexDirection: 'row',
-    marginBottom: 15,
-    gap: 10,
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 14,
+    marginBottom: 8,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
   },
-  quickTypeBtn: {
-    flex: 1,
-    flexDirection: 'row',
+  typeIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
-    borderRadius: 10,
-    borderWidth: 1,
-    gap: 5,
-  },
-  quickIncomeActive: {
-    backgroundColor: '#13ec6d',
-    borderColor: '#13ec6d',
-  },
-  quickExpenseActive: {
-    backgroundColor: '#ef4444',
-    borderColor: '#ef4444',
-  },
-  quickTypeText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  valueInputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    paddingBottom: 5,
-    marginBottom: 15,
-  },
-  currencyPrefix: {
-    fontSize: 24,
-    color: '#94a3b8',
-    fontWeight: '600',
     marginRight: 10,
   },
-  mainValueInput: {
+  txInfo: {
     flex: 1,
-    fontSize: 30,
-    fontWeight: 'bold',
+    marginRight: 10,
   },
-  descInputWrapper: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  descInput: {
-    flex: 1,
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    height: 50,
-    fontSize: 16,
-  },
-  descInputCat: {
-    flex: 1,
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    height: 50,
-    fontSize: 15,
-  },
-  confirmBtn: {
-    width: 50,
-    height: 50,
-    backgroundColor: '#3870d8',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  // --- AUTOCOMPLETE / SUGESTÕES ---
-  suggestionsBox: {
-    position: 'absolute',
-    top: 202,
-    left: 20,
-    right: 20,
-    borderRadius: 8,
-    borderWidth: 1,
-    elevation: 5,
-    maxHeight: 200,
-    zIndex: 100,
-  },
-  suggestionItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-  },
-
-  // --- LISTAGEM DE ITENS ---
-  listContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    zIndex: 0,
-  },
-  listTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  itemCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderRadius: 15,
-    marginBottom: 12,
-  },
-  itemCardEditing: {
-    borderWidth: 2,
-    borderColor: '#fbbf24',
-  },
-  itemIconContainer: {
-    padding: 10,
-    borderRadius: 12,
-  },
-  itemInfo: {
-    flex: 1,
-    marginLeft: 15,
-  },
-  itemTitle: {
-    fontSize: 16,
+  txDescription: {
+    fontSize: 14,
     fontWeight: '600',
+    marginBottom: 3,
   },
-  itemDetail: {
-    fontSize: 12,
-    marginBottom: 2,
+  txMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  itemCategory: {
-    color: '#a5a5a7',
-    fontSize: 12,
+  categoryBadge: {
+    backgroundColor: 'rgba(150, 150, 150, 0.15)',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
   },
-  itemValue: {
+  categoryBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  txDate: {
+    fontSize: 11,
+  },
+  txValueCol: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  txValue: {
     fontSize: 14,
     fontWeight: 'bold',
   },
-
-  // --- MENU LATERAL / MODAL (CATEGORIAS) ---
-  modalOverlay: {
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalBackdrop: {
-    flex: 1,
-  },
-  sideMenu: {
-    width: '85%',
-    padding: 25,
-    borderTopLeftRadius: 20,
-    borderBottomLeftRadius: 20,
-    elevation: 10,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  inputLabel: {
-    marginBottom: 5,
-    fontWeight: 'bold',
-  },
-  addCategoryRow: {
+  txActions: {
     flexDirection: 'row',
     gap: 10,
-    marginBottom: 10,
-  },
-  modalInput: {
-    flex: 1,
-    padding: 15,
-    borderRadius: 10,
-    fontSize: 16,
-  },
-  btnAddCategory: {
-    width: 50,
-    backgroundColor: '#13ec6d',
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  categoryListContainer: {
-    flex: 1,
-    marginTop: 5,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 5,
-  },
-  categoryItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  btnDelete: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 10,
-    marginTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
   },
 });

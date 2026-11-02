@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * TELA DE CONTAS FIXAS E PARCELAMENTOS
+ * TELA DE CONTAS FIXAS & PARCELAMENTOS (Com Navegação Mensal)
  * ============================================================================
  */
 
@@ -30,6 +30,9 @@ export default function FixedBillsScreen() {
     grandTotalAmount,
     totalBillsAmount,
     totalCardInstallments,
+    formattedMonth,
+    handlePrevMonth,
+    handleNextMonth,
     title,
     setTitle,
     value,
@@ -37,13 +40,13 @@ export default function FixedBillsScreen() {
     dueDay,
     setDueDay,
     editingId,
-    todayDay,
     handleSaveBill,
     handleStartEdit,
     handleCancelEdit,
     handleDeleteBill,
     handleTogglePayment,
     isBillPaid,
+    isItemOverdue,
     renderValue,
   } = useFixedBills();
 
@@ -75,14 +78,24 @@ export default function FixedBillsScreen() {
         <Text style={styles.headerLabel}>Total Comprometido no Mês</Text>
         <Text style={styles.headerTotal}>{renderValue(grandTotalAmount)}</Text>
 
-        {/* Detalhamento do Total */}
-        <View style={{ flexDirection: 'row', gap: 15, marginTop: 8 }}>
-          <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: 12 }}>
+        <View style={{ flexDirection: 'row', gap: 15, marginTop: 6 }}>
+          <Text style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: 12 }}>
             Fixas: {renderValue(totalBillsAmount)}
           </Text>
-          <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: 12 }}>
+          <Text style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: 12 }}>
             Cartões: {renderValue(totalCardInstallments)}
           </Text>
+        </View>
+
+        {/* --- SELETOR MENSAL --- */}
+        <View style={styles.monthSelector}>
+          <TouchableOpacity onPress={handlePrevMonth} style={styles.monthNavBtn}>
+            <MaterialIcons name="chevron-left" size={24} color="#ffffff" />
+          </TouchableOpacity>
+          <Text style={styles.monthText}>{formattedMonth}</Text>
+          <TouchableOpacity onPress={handleNextMonth} style={styles.monthNavBtn}>
+            <MaterialIcons name="chevron-right" size={24} color="#ffffff" />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -98,7 +111,7 @@ export default function FixedBillsScreen() {
               styles.input,
               { flex: 1.5, backgroundColor: theme.input, color: theme.text },
             ]}
-            placeholder="Nome (ex: Internet, Luz)"
+            placeholder="Nome (ex: Internet, Aluguel)"
             placeholderTextColor={theme.subtext}
             value={title}
             onChangeText={setTitle}
@@ -167,7 +180,7 @@ export default function FixedBillsScreen() {
         {/* --- LISTA DE CONTAS FIXAS TRADICIONAIS --- */}
         <View style={styles.listContainer}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
-            Boletos & Despesas Fixas
+            Boletos & Despesas Fixas ({formattedMonth})
           </Text>
 
           {bills.length === 0 ? (
@@ -177,7 +190,7 @@ export default function FixedBillsScreen() {
           ) : (
             bills.map((bill) => {
               const paid = isBillPaid(bill.id);
-              const isLate = !paid && bill.dueDay < todayDay;
+              const late = isItemOverdue(bill.dueDay, paid);
               const isEditing = editingId === bill.id;
 
               return (
@@ -207,7 +220,7 @@ export default function FixedBillsScreen() {
                       >
                         {bill.title}
                       </Text>
-                      {isLate && (
+                      {late && (
                         <View style={styles.badgeLate}>
                           <Text style={styles.badgeLateText}>ATRASADA</Text>
                         </View>
@@ -218,7 +231,7 @@ export default function FixedBillsScreen() {
                       style={[
                         styles.billSubtext,
                         { color: theme.subtext },
-                        isLate && { color: '#ef4444', fontWeight: 'bold' },
+                        late && { color: '#ef4444', fontWeight: 'bold' },
                       ]}
                     >
                       {paid
@@ -233,7 +246,7 @@ export default function FixedBillsScreen() {
                         styles.billValue,
                         { color: theme.text },
                         paid && { color: theme.subtext, textDecorationLine: 'line-through' },
-                        isLate && { color: '#ef4444' },
+                        late && { color: '#ef4444' },
                       ]}
                     >
                       {renderValue(bill.value)}
@@ -254,16 +267,16 @@ export default function FixedBillsScreen() {
           )}
         </View>
 
-        {/* --- LISTA DE PARCELAS DE CARTÕES DE CRÉDITO --- */}
+        {/* --- LISTA DE PARCELAS DE CARTÕES NO MÊS SELECIONADO --- */}
         {cardInstallments.length > 0 && (
           <View style={[styles.listContainer, { marginTop: 20 }]}>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>
-              Parcelamentos em Cartão (Este Mês)
+              Parcelamentos em Cartão ({formattedMonth})
             </Text>
 
             {cardInstallments.map((inst, index) => {
               const paid = isBillPaid(inst.purchaseId);
-              const isLate = !paid && inst.dueDay < todayDay;
+              const late = isItemOverdue(inst.dueDay, paid);
 
               return (
                 <View
@@ -306,7 +319,7 @@ export default function FixedBillsScreen() {
                       style={[
                         styles.billSubtext,
                         { color: theme.subtext },
-                        isLate && { color: '#ef4444', fontWeight: 'bold' },
+                        late && { color: '#ef4444', fontWeight: 'bold' },
                       ]}
                     >
                       {paid
@@ -321,7 +334,7 @@ export default function FixedBillsScreen() {
                         styles.billValue,
                         { color: theme.text },
                         paid && { color: theme.subtext, textDecorationLine: 'line-through' },
-                        isLate && { color: '#ef4444' },
+                        late && { color: '#ef4444' },
                       ]}
                     >
                       {renderValue(inst.value)}

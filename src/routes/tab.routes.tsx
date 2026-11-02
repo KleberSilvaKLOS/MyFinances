@@ -55,21 +55,6 @@ export default function TabRoutes() {
         },
       }}
     >
-      {/* 1. Tela Inicial */}
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          tabBarLabel: 'Início',
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons
-              name={focused ? 'home' : 'home-outline'}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
 
       {/* 2. Lançamentos / Gastos */}
       <Tab.Screen
@@ -103,6 +88,21 @@ export default function TabRoutes() {
         }}
       />
 
+        {/* 1. Tela Inicial */}
+        <Tab.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{
+            tabBarLabel: 'Início',
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons
+                name={focused ? 'home' : 'home-outline'}
+                size={size}
+                color={color}
+              />
+            ),
+          }}
+        />
       {/* 4. Gestão de Cartões de Crédito */}
       <Tab.Screen
         name="Cartoes"

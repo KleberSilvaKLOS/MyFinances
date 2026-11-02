@@ -1,7 +1,7 @@
 /**
  * ============================================================================
- * HOOK CUSTOMIZADO: useFixedBills (Atualizado)
- * Gerencia contas fixas e integra parcelas ativas de cartões de crédito.
+ * HOOK CUSTOMIZADO: useFixedBills
+ * Gerencia contas fixas, parcelamentos de cartões e sincronização de despesas.
  * ============================================================================
  */
 
@@ -14,6 +14,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { parseCurrencyInput, formatPrivateValue } from '../../utils/formatters';
 import { FixedBill, PaymentsMap } from './types';
 import { CreditCard, CardPurchase } from '../cards/types';
+import { Transaction } from '../../@types/finance';
 import {
   calculateAllCardsActiveInstallments,
   ActiveCardInstallment,
@@ -22,45 +23,63 @@ import {
 export function useFixedBills() {
   const { theme, isDark, isVisible, toggleVisibility } = useTheme();
 
-  // Estados principais
+  // Controle de competência mensal
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+
+  // Dados persistidos
   const [bills, setBills] = useState<FixedBill[]>([]);
   const [payments, setPayments] = useState<PaymentsMap>({});
-  const [cardInstallments, setCardInstallments] = useState<ActiveCardInstallment[]>([]);
-  const [totalCardInstallments, setTotalCardInstallments] = useState<number>(0);
+  const [cards, setCards] = useState<CreditCard[]>([]);
+  const [purchases, setPurchases] = useState<CardPurchase[]>([]);
 
-  // Campos do formulário
+  // Formulário de cadastro/edição
   const [title, setTitle] = useState<string>('');
   const [value, setValue] = useState<string>('');
   const [dueDay, setDueDay] = useState<string>('');
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  /**
-   * Chave única do mês atual no formato "MES_ANO" (ex: "10_2026").
-   */
+  const handlePrevMonth = () => {
+    setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
+  const formattedMonth = useMemo(() => {
+    return currentDate.toLocaleDateString('pt-BR', {
+      month: 'long',
+      year: 'numeric',
+    });
+  }, [currentDate]);
+
   const currentMonthKey = useMemo(() => {
-    const now = new Date();
-    return `${now.getMonth()}_${now.getFullYear()}`;
-  }, []);
+    return `${currentDate.getMonth()}_${currentDate.getFullYear()}`;
+  }, [currentDate]);
 
-  const todayDay = useMemo(() => new Date().getDate(), []);
+  const isItemOverdue = useCallback(
+    (dueDayNum: number, isPaid: boolean): boolean => {
+      if (isPaid) return false;
 
-  /**
-   * Valor total das contas fixas cadastradas.
-   */
-  const totalBillsAmount = useMemo(() => {
-    return bills.reduce((acc, item) => acc + Number(item.value || 0), 0);
-  }, [bills]);
+      const now = new Date();
+      const currentRealMonth = now.getMonth();
+      const currentRealYear = now.getFullYear();
+      const selMonth = currentDate.getMonth();
+      const selYear = currentDate.getFullYear();
 
-  /**
-   * Total geral previsto: Contas Fixas + Parcelas de Cartão deste mês.
-   */
-  const grandTotalAmount = useMemo(() => {
-    return totalBillsAmount + totalCardInstallments;
-  }, [totalBillsAmount, totalCardInstallments]);
+      if (selYear < currentRealYear || (selYear === currentRealYear && selMonth < currentRealMonth)) {
+        return true;
+      }
 
-  /**
-   * Carrega contas, pagamentos, cartões e compras do AsyncStorage.
-   */
+      if (selYear > currentRealYear || (selYear === currentRealYear && selMonth > currentRealMonth)) {
+        return false;
+      }
+
+      return dueDayNum < now.getDate();
+    },
+    [currentDate]
+  );
+
   const loadBillsData = async () => {
     try {
       const [storedBills, storedPayments, storedCards, storedPurchases] = await Promise.all([
@@ -72,15 +91,10 @@ export function useFixedBills() {
 
       if (storedBills) setBills(JSON.parse(storedBills));
       if (storedPayments) setPayments(JSON.parse(storedPayments));
-
-      const cards: CreditCard[] = storedCards ? JSON.parse(storedCards) : [];
-      const purchases: CardPurchase[] = storedPurchases ? JSON.parse(storedPurchases) : [];
-
-      const { items, total } = calculateAllCardsActiveInstallments(cards, purchases);
-      setCardInstallments(items);
-      setTotalCardInstallments(total);
+      if (storedCards) setCards(JSON.parse(storedCards));
+      if (storedPurchases) setPurchases(JSON.parse(storedPurchases));
     } catch (error) {
-      console.log('Erro ao carregar dados de contas fixas e cartões:', error);
+      console.log('Erro ao carregar dados:', error);
     }
   };
 
@@ -89,6 +103,19 @@ export function useFixedBills() {
       loadBillsData();
     }, [])
   );
+
+  const { cardInstallments, totalCardInstallments } = useMemo(() => {
+    const { items, total } = calculateAllCardsActiveInstallments(cards, purchases, currentDate);
+    return { cardInstallments: items, totalCardInstallments: total };
+  }, [cards, purchases, currentDate]);
+
+  const totalBillsAmount = useMemo(() => {
+    return bills.reduce((acc, item) => acc + Number(item.value || 0), 0);
+  }, [bills]);
+
+  const grandTotalAmount = useMemo(() => {
+    return totalBillsAmount + totalCardInstallments;
+  }, [totalBillsAmount, totalCardInstallments]);
 
   const saveBills = async (newList: FixedBill[]) => {
     try {
@@ -172,29 +199,81 @@ export function useFixedBills() {
       {
         text: 'Excluir',
         style: 'destructive',
-        onPress: () => {
+        onPress: async () => {
           const filtered = bills.filter((b) => b.id !== id);
           saveBills(filtered);
 
-          if (editingId === id) {
-            handleCancelEdit();
+          try {
+            const rawTrans = await AsyncStorage.getItem('@myfinance:transactions');
+            if (rawTrans) {
+              const currentTrans: Transaction[] = JSON.parse(rawTrans);
+              const txKey = `tx_bill_${id}_${currentMonthKey}`;
+              const updatedTrans = currentTrans.filter((t) => t.id !== txKey);
+              await AsyncStorage.setItem('@myfinance:transactions', JSON.stringify(updatedTrans));
+            }
+          } catch (e) {
+            console.log('Erro ao remover transação vinculada:', e);
           }
+
+          if (editingId === id) handleCancelEdit();
         },
       },
     ]);
   };
 
-  /**
-   * Marca como paga qualquer conta fixa ou parcela de cartão no mês.
-   */
-  const handleTogglePayment = (itemId: string) => {
+  const handleTogglePayment = async (itemId: string) => {
     const paymentKey = `${itemId}_${currentMonthKey}`;
+    const willBePaid = !payments[paymentKey];
+
     const newPayments = {
       ...payments,
-      [paymentKey]: !payments[paymentKey],
+      [paymentKey]: willBePaid,
     };
-
     savePayments(newPayments);
+
+    try {
+      const rawTrans = await AsyncStorage.getItem('@myfinance:transactions');
+      const currentTrans: Transaction[] = rawTrans ? JSON.parse(rawTrans) : [];
+      const txLinkedId = `tx_bill_${itemId}_${currentMonthKey}`;
+
+      if (willBePaid) {
+        const bill = bills.find((b) => b.id === itemId);
+        const inst = cardInstallments.find((i) => i.purchaseId === itemId);
+
+        if (!bill && !inst) return;
+
+        const now = new Date();
+        const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(
+          now.getMonth() + 1
+        ).padStart(2, '0')}/${now.getFullYear()}`;
+
+        const desc = bill
+          ? `Pagamento: ${bill.title}`
+          : `Parcela ${inst!.currentInstallment}/${inst!.totalInstallments} - ${inst!.description} (${inst!.cardName})`;
+
+        const expenseVal = bill ? Number(bill.value) : Number(inst!.value);
+        const cat = bill ? 'Contas Fixas' : 'Cartão';
+
+        // Objeto compatível com ambas as interfaces ('value' ou 'amount')
+        const newExpenseTx = {
+          id: txLinkedId,
+          description: desc,
+          value: expenseVal,
+          amount: expenseVal,
+          type: 'expense',
+          category: cat,
+          date: formattedDate,
+        } as unknown as Transaction;
+
+        const updatedTrans = [newExpenseTx, ...currentTrans.filter((t) => t.id !== txLinkedId)];
+        await AsyncStorage.setItem('@myfinance:transactions', JSON.stringify(updatedTrans));
+      } else {
+        const updatedTrans = currentTrans.filter((t) => t.id !== txLinkedId);
+        await AsyncStorage.setItem('@myfinance:transactions', JSON.stringify(updatedTrans));
+      }
+    } catch (error) {
+      console.log('Erro ao sincronizar transação de pagamento:', error);
+    }
   };
 
   const isBillPaid = (itemId: string): boolean => {
@@ -213,6 +292,9 @@ export function useFixedBills() {
     totalBillsAmount,
     totalCardInstallments,
     grandTotalAmount,
+    formattedMonth,
+    handlePrevMonth,
+    handleNextMonth,
     title,
     setTitle,
     value,
@@ -220,13 +302,13 @@ export function useFixedBills() {
     dueDay,
     setDueDay,
     editingId,
-    todayDay,
     handleSaveBill,
     handleStartEdit,
     handleCancelEdit,
     handleDeleteBill,
     handleTogglePayment,
     isBillPaid,
+    isItemOverdue,
     renderValue,
   };
 }

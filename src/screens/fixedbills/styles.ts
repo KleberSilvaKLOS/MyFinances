@@ -177,4 +177,25 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
   },
+
+  // Adicione dentro de StyleSheet.create em styles.ts:
+  monthSelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 14,
+  },
+  monthNavBtn: {
+    padding: 6,
+  },
+  monthText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textTransform: 'capitalize',
+  },
 });
