@@ -1,6 +1,6 @@
-// Folha de estilos isolada (StyleSheet)
-
 import { StyleSheet, Dimensions } from 'react-native';
+
+const { width } = Dimensions.get('window');
 
 export const styles = StyleSheet.create({
   // --- ESTRUTURA GLOBAL ---
@@ -10,277 +10,277 @@ export const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 100,
   },
-  emptyText: {
-    color: '#94a3b8',
-    textAlign: 'center',
-    marginVertical: 10,
-  },
 
-  // --- CABEÇALHO (HEADER) ---
+  // --- CABEÇALHO ---
   header: {
     padding: 20,
     paddingTop: 15,
-    paddingBottom: 30,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
+    paddingBottom: 25,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 15,
   },
-  greeting: {
-    color: '#ffffffaa',
-    fontSize: 14,
+  greetingText: {
+    color: 'rgba(255, 255, 255, 0.75)',
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  headerTitle: {
+    color: '#ffffff',
+    fontSize: 22,
+    fontWeight: 'bold',
   },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   headerIconBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  labelBalance: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  balanceLabel: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   balanceValue: {
-    color: '#fff',
-    fontSize: 36,
+    color: '#ffffff',
+    fontSize: 32,
     fontWeight: 'bold',
-    marginTop: 5,
+    marginVertical: 4,
   },
-
-  // --- BOTÕES DE AÇÃO RÁPIDA (RECEITA / DESPESA) ---
-  actionsContainer: {
+  indicatorsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginTop: -25,
-    height: 55,
+    gap: 20,
+    marginTop: 10,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.15)',
   },
-  actionBtn: {
-    flex: 0.48,
-    borderRadius: 15,
-    padding: 15,
-    alignItems: 'center',
+  indicatorItem: {
     flexDirection: 'row',
-    gap: 10,
-    elevation: 4,
-  },
-  iconCircle: {
-    width: 35,
-    height: 35,
-    borderRadius: 18,
-    justifyContent: 'center',
     alignItems: 'center',
+    gap: 5,
   },
-  actionText: {
-    fontWeight: 'bold',
+  indicatorLabel: {
+    color: 'rgba(255, 255, 255, 0.75)',
+    fontSize: 12,
+  },
+  indicatorVal: {
     fontSize: 13,
+    fontWeight: 'bold',
   },
 
-  // --- SEÇÕES E CARDS ---
-  sectionContainer: {
-    marginTop: 25,
-    paddingHorizontal: 20,
+  // --- CARD COMPROMISSOS DO MÊS ---
+  summaryBox: {
+    marginHorizontal: 20,
+    marginTop: -15,
+    borderRadius: 18,
+    padding: 16,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
-  },
-  card: {
-    borderRadius: 20,
-    padding: 20,
-    elevation: 2,
-  },
-  cardDark: {
-    backgroundColor: '#1e293b',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 20,
-  },
-
-  // --- GRÁFICO DONUT E LEGENDA ---
-  chartRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  chartWrapper: {
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  donutHole: {
-    position: 'absolute',
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    justifyContent: 'center',
-    alignItems: 'center',
-    left: 45,
-  },
-  donutText: {
-    fontSize: 12,
-    color: '#94a3b8',
-    fontWeight: 'bold',
-  },
-  legendContainer: {
-    flex: 1,
-    marginLeft: 10,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    justifyContent: 'space-between',
-  },
-  legendColor: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 8,
-  },
-  legendText: {
-    flex: 1,
-    fontSize: 12,
-  },
-  legendValue: {
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
-  divider: {
-    height: 1,
-    marginVertical: 8,
-  },
-  totalExpenseValue: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-
-  // --- CONTAS FIXAS E PENDÊNCIAS ---
-  fixedHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 15,
-  },
-  iconBox: {
-    width: 45,
-    height: 45,
-    borderRadius: 12,
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fixedLabel: {
-    color: '#94a3b8',
-    fontSize: 12,
-  },
-  fixedValue: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: 'bold',
-  },
-  fixedDivider: {
-    height: 1,
-    marginVertical: 15,
-  },
-  nextBillLabel: {
-    color: '#ef4444',
-    fontSize: 10,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  billItemRow: {
+  summaryBoxTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
   },
-  nextBillTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  summaryBoxTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
-  nextBillValue: {
-    color: '#fff',
+  summaryBoxTotal: {
     fontSize: 16,
     fontWeight: 'bold',
   },
-  nextBillDateText: {
-    color: '#94a3b8',
+  summarySplitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(150, 150, 150, 0.15)',
+  },
+  summarySplitItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  splitLabel: {
     fontSize: 11,
+    marginBottom: 2,
   },
-  lateBadge: {
-    backgroundColor: '#ef4444',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+  splitValue: {
+    fontSize: 14,
+    fontWeight: '700',
   },
-  lateBadgeText: {
-    color: '#fff',
-    fontSize: 8,
-    fontWeight: 'bold',
+  splitDivider: {
+    width: 1,
+    height: 28,
   },
 
-  // --- MENU LATERAL (MODAL) ---
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-    flexDirection: 'row',
+  // --- CARD PRETO PREMIUM (CONTAS PENDENTES) ---
+  blackSectionContainer: {
+    marginTop: 20,
+    paddingHorizontal: 20,
   },
-  drawerContainer: {
-    width: '75%',
-    height: '100%',
-    padding: 20,
-    elevation: 10,
+  blackCardWrapper: {
+    backgroundColor: '#0f172a', // Preto / Dark Slate profundo
+    borderRadius: 20,
+    padding: 18,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#1e293b',
   },
-  drawerHeader: {
+  blackCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 14,
+    paddingBottom: 10,
     borderBottomWidth: 1,
-    paddingBottom: 15,
+    borderBottomColor: '#1e293b',
   },
-  drawerTitle: {
-    fontSize: 20,
+  blackDotIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#fbbf24', // Dourado / Amarelo de atenção
+  },
+  blackCardTitle: {
+    color: '#ffffff',
+    fontSize: 15,
     fontWeight: 'bold',
+    letterSpacing: 0.3,
   },
-  drawerContent: {
-    flex: 1,
+  blackCardLink: {
+    color: '#60a5fa',
+    fontSize: 12,
+    fontWeight: '600',
   },
-  drawerItem: {
+  blackEmptyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
-    gap: 15,
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
   },
-  drawerItemText: {
-    fontSize: 16,
+  blackEmptyText: {
+    color: '#94a3b8',
+    fontSize: 13,
     fontWeight: '500',
   },
-  logoutBtn: {
+  blackItemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  blackItemLeft: {
+    flex: 1,
+    marginRight: 10,
+  },
+  blackItemTitle: {
+    color: '#f8fafc',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  blackItemSub: {
+    color: '#94a3b8',
+    fontSize: 11,
+  },
+  blackItemValue: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+
+  // --- SEÇÃO PARCELAMENTOS ---
+  sectionContainer: {
+    marginTop: 25,
+    paddingHorizontal: 20,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  seeAllText: {
+    fontSize: 13,
+    color: '#3870d8',
+    fontWeight: '600',
+  },
+  emptyCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 15,
-    paddingVertical: 20,
-    borderTopWidth: 1,
-    marginBottom: 10,
+    justifyContent: 'center',
+    gap: 8,
+    padding: 18,
+    borderRadius: 14,
   },
-  logoutBtnText: {
-    fontSize: 16,
-    color: '#ef4444',
+  emptyCardText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  itemCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    borderRadius: 14,
+    marginBottom: 10,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+  },
+  itemInfo: {
+    flex: 1,
+    marginRight: 10,
+  },
+  itemTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 3,
+  },
+  itemSubtext: {
+    fontSize: 12,
+  },
+  itemValue: {
+    fontSize: 14,
     fontWeight: 'bold',
   },
 });
