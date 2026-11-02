@@ -1,7 +1,7 @@
 /**
  * ============================================================================
- * HOOK CUSTOMIZADO: useFixedBills
- * Centraliza as regras de negócio, liquidação mensal e persistência de contas fixas.
+ * HOOK CUSTOMIZADO: useFixedBills (Atualizado)
+ * Gerencia contas fixas e integra parcelas ativas de cartões de crédito.
  * ============================================================================
  */
 
@@ -13,6 +13,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { parseCurrencyInput, formatPrivateValue } from '../../utils/formatters';
 import { FixedBill, PaymentsMap } from './types';
+import { CreditCard, CardPurchase } from '../cards/types';
+import {
+  calculateAllCardsActiveInstallments,
+  ActiveCardInstallment,
+} from '../../utils/cardCalculations';
 
 export function useFixedBills() {
   const { theme, isDark, isVisible, toggleVisibility } = useTheme();
@@ -20,6 +25,8 @@ export function useFixedBills() {
   // Estados principais
   const [bills, setBills] = useState<FixedBill[]>([]);
   const [payments, setPayments] = useState<PaymentsMap>({});
+  const [cardInstallments, setCardInstallments] = useState<ActiveCardInstallment[]>([]);
+  const [totalCardInstallments, setTotalCardInstallments] = useState<number>(0);
 
   // Campos do formulário
   const [title, setTitle] = useState<string>('');
@@ -35,32 +42,45 @@ export function useFixedBills() {
     return `${now.getMonth()}_${now.getFullYear()}`;
   }, []);
 
-  /**
-   * Dia atual do mês para comparação de atrasos.
-   */
   const todayDay = useMemo(() => new Date().getDate(), []);
 
   /**
-   * Valor total somado de todas as contas fixas cadastradas.
+   * Valor total das contas fixas cadastradas.
    */
-  const totalAmount = useMemo(() => {
+  const totalBillsAmount = useMemo(() => {
     return bills.reduce((acc, item) => acc + Number(item.value || 0), 0);
   }, [bills]);
 
   /**
-   * Carrega as contas cadastradas e o mapa de pagamentos do AsyncStorage.
+   * Total geral previsto: Contas Fixas + Parcelas de Cartão deste mês.
+   */
+  const grandTotalAmount = useMemo(() => {
+    return totalBillsAmount + totalCardInstallments;
+  }, [totalBillsAmount, totalCardInstallments]);
+
+  /**
+   * Carrega contas, pagamentos, cartões e compras do AsyncStorage.
    */
   const loadBillsData = async () => {
     try {
-      const [storedBills, storedPayments] = await Promise.all([
+      const [storedBills, storedPayments, storedCards, storedPurchases] = await Promise.all([
         AsyncStorage.getItem('@myfinance:fixed_bills'),
         AsyncStorage.getItem('@myfinance:bill_payments'),
+        AsyncStorage.getItem('@myfinance:credit_cards'),
+        AsyncStorage.getItem('@myfinance:card_purchases'),
       ]);
 
       if (storedBills) setBills(JSON.parse(storedBills));
       if (storedPayments) setPayments(JSON.parse(storedPayments));
+
+      const cards: CreditCard[] = storedCards ? JSON.parse(storedCards) : [];
+      const purchases: CardPurchase[] = storedPurchases ? JSON.parse(storedPurchases) : [];
+
+      const { items, total } = calculateAllCardsActiveInstallments(cards, purchases);
+      setCardInstallments(items);
+      setTotalCardInstallments(total);
     } catch (error) {
-      console.log('Erro ao carregar dados de contas fixas:', error);
+      console.log('Erro ao carregar dados de contas fixas e cartões:', error);
     }
   };
 
@@ -70,9 +90,6 @@ export function useFixedBills() {
     }, [])
   );
 
-  /**
-   * Salva a lista de contas fixas no armazenamento local.
-   */
   const saveBills = async (newList: FixedBill[]) => {
     try {
       await AsyncStorage.setItem('@myfinance:fixed_bills', JSON.stringify(newList));
@@ -82,9 +99,6 @@ export function useFixedBills() {
     }
   };
 
-  /**
-   * Salva o mapa de pagamentos mensais no armazenamento local.
-   */
   const savePayments = async (newPayments: PaymentsMap) => {
     try {
       await AsyncStorage.setItem('@myfinance:bill_payments', JSON.stringify(newPayments));
@@ -94,9 +108,6 @@ export function useFixedBills() {
     }
   };
 
-  /**
-   * Adiciona uma nova conta fixa ou atualiza a conta em edição.
-   */
   const handleSaveBill = () => {
     const trimmedTitle = title.trim();
     const numericDay = parseInt(dueDay, 10);
@@ -131,9 +142,7 @@ export function useFixedBills() {
       updatedBills.push(newBill);
     }
 
-    // Ordena pelo dia de vencimento
     updatedBills.sort((a, b) => a.dueDay - b.dueDay);
-
     saveBills(updatedBills);
 
     setTitle('');
@@ -142,9 +151,6 @@ export function useFixedBills() {
     Keyboard.dismiss();
   };
 
-  /**
-   * Prepara o formulário para edição de uma conta fixa.
-   */
   const handleStartEdit = (bill: FixedBill) => {
     setEditingId(bill.id);
     setTitle(bill.title);
@@ -152,9 +158,6 @@ export function useFixedBills() {
     setDueDay(String(bill.dueDay));
   };
 
-  /**
-   * Cancela o modo de edição e limpa os campos.
-   */
   const handleCancelEdit = () => {
     setEditingId(null);
     setTitle('');
@@ -163,9 +166,6 @@ export function useFixedBills() {
     Keyboard.dismiss();
   };
 
-  /**
-   * Remove permanentemente uma conta fixa do catálogo.
-   */
   const handleDeleteBill = (id: string) => {
     Alert.alert('Excluir Conta', 'Deseja remover esta conta fixa permanentemente?', [
       { text: 'Cancelar', style: 'cancel' },
@@ -185,10 +185,10 @@ export function useFixedBills() {
   };
 
   /**
-   * Alterna o estado de liquidação (pago / não pago) da conta no mês corrente.
+   * Marca como paga qualquer conta fixa ou parcela de cartão no mês.
    */
-  const handleTogglePayment = (billId: string) => {
-    const paymentKey = `${billId}_${currentMonthKey}`;
+  const handleTogglePayment = (itemId: string) => {
+    const paymentKey = `${itemId}_${currentMonthKey}`;
     const newPayments = {
       ...payments,
       [paymentKey]: !payments[paymentKey],
@@ -197,16 +197,10 @@ export function useFixedBills() {
     savePayments(newPayments);
   };
 
-  /**
-   * Verifica se a conta está paga no mês corrente.
-   */
-  const isBillPaid = (billId: string): boolean => {
-    return !!payments[`${billId}_${currentMonthKey}`];
+  const isBillPaid = (itemId: string): boolean => {
+    return !!payments[`${itemId}_${currentMonthKey}`];
   };
 
-  /**
-   * Formata valores respeitando o modo de privacidade do ThemeContext.
-   */
   const renderValue = (val: number) => formatPrivateValue(val, isVisible);
 
   return {
@@ -215,7 +209,10 @@ export function useFixedBills() {
     isVisible,
     toggleVisibility,
     bills,
-    totalAmount,
+    cardInstallments,
+    totalBillsAmount,
+    totalCardInstallments,
+    grandTotalAmount,
     title,
     setTitle,
     value,

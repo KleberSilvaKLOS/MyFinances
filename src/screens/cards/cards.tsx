@@ -1,7 +1,6 @@
 /**
  * ============================================================================
- * TELA DE GESTÃO DE CARTÕES E PARCELAMENTOS
- * Camada de apresentação visual conectada ao hook useCards.
+ * TELA DE CARTÕES COM SELETOR DE CARTEIRA
  * ============================================================================
  */
 
@@ -30,9 +29,9 @@ export default function CardsScreen() {
     toggleVisibility,
     cards,
     activeCard,
+    handleSelectCard,
     currentInvoice,
     formattedMonth,
-    committedLimit,
     availableLimit,
     limitUsagePercentage,
     desc,
@@ -69,7 +68,7 @@ export default function CardsScreen() {
         backgroundColor={theme.header}
       />
 
-      {/* --- MODAL DE NOVO CARTÃO --- */}
+      {/* --- MODAL NOVO CARTÃO --- */}
       <Modal
         animationType="fade"
         transparent
@@ -94,21 +93,15 @@ export default function CardsScreen() {
             </Text>
 
             <TextInput
-              style={[
-                styles.input,
-                { backgroundColor: theme.input, color: theme.text },
-              ]}
-              placeholder="Nome do cartão (ex: Nubank, Inter)"
+              style={[styles.input, { backgroundColor: theme.input, color: theme.text }]}
+              placeholder="Nome (ex: Nubank, Itaú, Sicredi)"
               placeholderTextColor={theme.subtext}
               value={cardName}
               onChangeText={setCardName}
             />
 
             <TextInput
-              style={[
-                styles.input,
-                { backgroundColor: theme.input, color: theme.text },
-              ]}
+              style={[styles.input, { backgroundColor: theme.input, color: theme.text }]}
               placeholder="Limite Total (R$)"
               placeholderTextColor={theme.subtext}
               keyboardType="numeric"
@@ -118,10 +111,7 @@ export default function CardsScreen() {
 
             <View style={styles.formRow}>
               <TextInput
-                style={[
-                  styles.input,
-                  { flex: 1, backgroundColor: theme.input, color: theme.text },
-                ]}
+                style={[styles.input, { flex: 1, backgroundColor: theme.input, color: theme.text }]}
                 placeholder="Dia Fechamento"
                 placeholderTextColor={theme.subtext}
                 keyboardType="numeric"
@@ -131,10 +121,7 @@ export default function CardsScreen() {
               />
 
               <TextInput
-                style={[
-                  styles.input,
-                  { flex: 1, backgroundColor: theme.input, color: theme.text },
-                ]}
+                style={[styles.input, { flex: 1, backgroundColor: theme.input, color: theme.text }]}
                 placeholder="Dia Vencimento"
                 placeholderTextColor={theme.subtext}
                 keyboardType="numeric"
@@ -177,7 +164,36 @@ export default function CardsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* --- CARTÃO VISUAL --- */}
+        {/* --- CARTEIRA: SELETOR DE CARTÕES CADASTRADOS --- */}
+        {cards.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.walletScroll}
+          >
+            {cards.map((c) => {
+              const isSelected = activeCard?.id === c.id;
+              return (
+                <TouchableOpacity
+                  key={c.id}
+                  style={[
+                    styles.walletCardTab,
+                    { backgroundColor: c.color },
+                    isSelected && { borderColor: '#fff' },
+                  ]}
+                  onPress={() => handleSelectCard(c.id)}
+                >
+                  {isSelected && <View style={styles.walletBadgeActive} />}
+                  <Text style={[styles.walletCardTabText, { color: '#fff' }]}>
+                    {c.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        )}
+
+        {/* --- CARTÃO VISUAL ATIVO --- */}
         <View style={styles.cardPreviewWrapper}>
           {activeCard ? (
             <View style={[styles.virtualCard, { backgroundColor: activeCard.color }]}>
@@ -195,7 +211,6 @@ export default function CardsScreen() {
                 </Text>
               </View>
 
-              {/* Barra de Progresso do Limite */}
               <View style={styles.limitBarBg}>
                 <View
                   style={[
@@ -263,18 +278,15 @@ export default function CardsScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* --- FORMULÁRIO DE LANÇAMENTO PARCELADO --- */}
+            {/* --- LANÇAR COMPRA NO CARTÃO ATIVO --- */}
             <View style={[styles.formCard, { backgroundColor: theme.card }]}>
               <Text style={[styles.formTitle, { color: theme.text }]}>
-                Lançar Compra no Cartão
+                Lançar Compra em: {activeCard.name}
               </Text>
 
               <TextInput
-                style={[
-                  styles.input,
-                  { backgroundColor: theme.input, color: theme.text },
-                ]}
-                placeholder="Descrição (ex: Smartphone)"
+                style={[styles.input, { backgroundColor: theme.input, color: theme.text }]}
+                placeholder="Descrição (ex: Smartphone, Supermercado)"
                 placeholderTextColor={theme.subtext}
                 value={desc}
                 onChangeText={setDesc}
@@ -282,10 +294,7 @@ export default function CardsScreen() {
 
               <View style={styles.formRow}>
                 <TextInput
-                  style={[
-                    styles.input,
-                    { flex: 1.5, backgroundColor: theme.input, color: theme.text },
-                  ]}
+                  style={[styles.input, { flex: 1.5, backgroundColor: theme.input, color: theme.text }]}
                   placeholder="Valor Total (R$)"
                   placeholderTextColor={theme.subtext}
                   keyboardType="numeric"
@@ -308,19 +317,19 @@ export default function CardsScreen() {
               </View>
 
               <TouchableOpacity style={styles.btnSubmit} onPress={handleAddPurchase}>
-                <Text style={styles.btnSubmitText}>Adicionar Compra</Text>
+                <Text style={styles.btnSubmitText}>Lançar Compra</Text>
               </TouchableOpacity>
             </View>
 
-            {/* --- LISTAGEM DE COMPRAS / PARCELAS DA FATURA --- */}
+            {/* --- LISTAGEM DE ITENS DA FATURA --- */}
             <View style={styles.sectionContainer}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                Itens desta Fatura
+                Itens desta Fatura ({activeCard.name})
               </Text>
 
               {currentInvoice.items.length === 0 ? (
                 <Text style={[styles.emptyText, { color: theme.subtext }]}>
-                  Nenhuma compra vinculada a esta fatura.
+                  Nenhuma compra encontrada nesta fatura.
                 </Text>
               ) : (
                 currentInvoice.items.map((item, index) => (

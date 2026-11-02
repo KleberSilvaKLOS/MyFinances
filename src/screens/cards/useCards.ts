@@ -1,7 +1,7 @@
 /**
  * ============================================================================
- * HOOK CUSTOMIZADO: useCards
- * Centraliza as regras de cartões de crédito, parcelamentos e projeção de faturas.
+ * HOOK CUSTOMIZADO: useCards (Atualizado)
+ * Suporte a múltiplos cartões com seletor ativo e projeção de faturas.
  * ============================================================================
  */
 
@@ -23,34 +23,30 @@ import {
 export function useCards() {
   const { theme, isDark, isVisible, toggleVisibility } = useTheme();
 
-  // Estados dos cartões e compras
   const [cards, setCards] = useState<CreditCard[]>([]);
   const [purchases, setPurchases] = useState<CardPurchase[]>([]);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
-  // Mês de navegação da fatura
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
-  // Formulário de compra parcelada
+  // Formulário de compra
   const [desc, setDesc] = useState<string>('');
   const [val, setVal] = useState<string>('');
   const [installments, setInstallments] = useState<string>('1');
 
-  // Formulário / Configuração do cartão
+  // Modal de novo cartão
   const [cardName, setCardName] = useState<string>('');
   const [cardLimit, setCardLimit] = useState<string>('');
   const [closingDay, setClosingDay] = useState<string>('');
   const [dueDay, setDueDay] = useState<string>('');
   const [showCardModal, setShowCardModal] = useState<boolean>(false);
 
-  /**
-   * Carrega os cartões e as compras salvas no AsyncStorage.
-   */
   const loadData = async () => {
     try {
-      const [storedCards, storedPurchases] = await Promise.all([
+      const [storedCards, storedPurchases, lastSelectedId] = await Promise.all([
         AsyncStorage.getItem('@myfinance:credit_cards'),
         AsyncStorage.getItem('@myfinance:card_purchases'),
+        AsyncStorage.getItem('@myfinance:last_card_id'),
       ]);
 
       const parsedCards: CreditCard[] = storedCards ? JSON.parse(storedCards) : [];
@@ -59,11 +55,15 @@ export function useCards() {
       setCards(parsedCards);
       setPurchases(parsedPurchases);
 
-      if (parsedCards.length > 0 && !selectedCardId) {
-        setSelectedCardId(parsedCards[0].id);
+      if (parsedCards.length > 0) {
+        if (lastSelectedId && parsedCards.some((c) => c.id === lastSelectedId)) {
+          setSelectedCardId(lastSelectedId);
+        } else {
+          setSelectedCardId(parsedCards[0].id);
+        }
       }
     } catch (error) {
-      console.log('Erro ao carregar cartões e parcelamentos:', error);
+      console.log('Erro ao carregar dados dos cartões:', error);
     }
   };
 
@@ -73,13 +73,15 @@ export function useCards() {
     }, [])
   );
 
+  const handleSelectCard = async (id: string) => {
+    setSelectedCardId(id);
+    await AsyncStorage.setItem('@myfinance:last_card_id', id);
+  };
+
   const activeCard = useMemo(() => {
     return cards.find((c) => c.id === selectedCardId) || cards[0] || null;
   }, [cards, selectedCardId]);
 
-  /**
-   * Salva a lista de cartões no AsyncStorage.
-   */
   const saveCards = async (newCards: CreditCard[]) => {
     try {
       await AsyncStorage.setItem('@myfinance:credit_cards', JSON.stringify(newCards));
@@ -89,9 +91,6 @@ export function useCards() {
     }
   };
 
-  /**
-   * Salva as compras parceladas no AsyncStorage.
-   */
   const savePurchases = async (newPurchases: CardPurchase[]) => {
     try {
       await AsyncStorage.setItem('@myfinance:card_purchases', JSON.stringify(newPurchases));
@@ -101,9 +100,6 @@ export function useCards() {
     }
   };
 
-  /**
-   * Cadastra um novo cartão de crédito.
-   */
   const handleSaveCard = () => {
     const nameTrimmed = cardName.trim();
     const limitNum = parseCurrencyInput(cardLimit);
@@ -126,7 +122,7 @@ export function useCards() {
 
     const updated = [...cards, newCard];
     saveCards(updated);
-    setSelectedCardId(newCard.id);
+    handleSelectCard(newCard.id);
 
     setCardName('');
     setCardLimit('');
@@ -135,25 +131,26 @@ export function useCards() {
     setShowCardModal(false);
   };
 
-  /**
-   * Cadastra uma nova compra (à vista ou parcelada).
-   */
   const handleAddPurchase = () => {
     if (!activeCard) {
-      Alert.alert('Atenção', 'Cadastre um cartão primeiro.');
+      Alert.alert('Atenção', 'Selecione ou cadastre um cartão primeiro.');
       return;
     }
 
     const descTrimmed = desc.trim();
     const totalVal = parseCurrencyInput(val);
-    const totalInst = parseInt(installments, 10);
+    const totalInst = parseInt(installments, 10) || 1;
 
-    if (!descTrimmed || totalVal <= 0 || isNaN(totalInst) || totalInst <= 0) {
-      Alert.alert('Atenção', 'Informe a descrição, o valor total e o número de parcelas.');
+    if (!descTrimmed || totalVal <= 0) {
+      Alert.alert('Atenção', 'Informe uma descrição e um valor válido.');
       return;
     }
 
     const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+
     const installmentValue = Number((totalVal / totalInst).toFixed(2));
 
     const newPurchase: CardPurchase = {
@@ -163,7 +160,7 @@ export function useCards() {
       totalValue: totalVal,
       installmentCount: totalInst,
       installmentValue,
-      purchaseDate: now.toLocaleDateString('pt-BR'),
+      purchaseDate: `${day}/${month}/${year}`,
     };
 
     const updated = [newPurchase, ...purchases];
@@ -175,11 +172,8 @@ export function useCards() {
     Keyboard.dismiss();
   };
 
-  /**
-   * Exclui uma compra e todas as parcelas restantes.
-   */
   const handleDeletePurchase = (id: string) => {
-    Alert.alert('Excluir Compra', 'Deseja remover esta compra e suas parcelas?', [
+    Alert.alert('Excluir Compra', 'Deseja remover esta compra e todas as parcelas?', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Excluir',
@@ -192,9 +186,6 @@ export function useCards() {
     ]);
   };
 
-  /**
-   * Navega entre os meses da fatura.
-   */
   const handlePrevMonth = () => {
     setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   };
@@ -211,8 +202,7 @@ export function useCards() {
   }, [currentDate]);
 
   /**
-   * Calcula as parcelas ativas para o mês da fatura atual.
-   * Lógica de competência: Se a compra ocorreu no dia >= dia de fechamento, a 1ª parcela cai no mês seguinte.
+   * Cálculo de competência por fatura
    */
   const currentInvoice: InvoiceDetails = useMemo(() => {
     if (!activeCard) {
@@ -227,15 +217,16 @@ export function useCards() {
     const cardPurchases = purchases.filter((p) => p.cardId === activeCard.id);
 
     cardPurchases.forEach((p) => {
-      const [d, m, y] = p.purchaseDate.split('/').map(Number);
-      const purchaseMonth = m - 1;
-      const purchaseYear = y;
+      const parts = p.purchaseDate.split('/').map(Number);
+      const day = parts[0];
+      const purchaseMonth = parts[1] - 1;
+      const purchaseYear = parts[2];
 
-      // Define o primeiro mês de cobrança
       let firstInvoiceMonth = purchaseMonth;
       let firstInvoiceYear = purchaseYear;
 
-      if (d >= activeCard.closingDay) {
+      // Se a compra foi feita no dia ou após o fechamento, cai no mês seguinte
+      if (day >= activeCard.closingDay) {
         firstInvoiceMonth += 1;
         if (firstInvoiceMonth > 11) {
           firstInvoiceMonth = 0;
@@ -243,15 +234,13 @@ export function useCards() {
         }
       }
 
-      // Calcula a diferença em meses entre o mês da fatura em tela e o mês inicial
       const monthDiff = (targetYear - firstInvoiceYear) * 12 + (targetMonth - firstInvoiceMonth);
 
       if (monthDiff >= 0 && monthDiff < p.installmentCount) {
-        const currentInstallment = monthDiff + 1;
         items.push({
           purchaseId: p.id,
           description: p.description,
-          currentInstallment,
+          currentInstallment: monthDiff + 1,
           totalInstallments: p.installmentCount,
           value: p.installmentValue,
         });
@@ -267,9 +256,6 @@ export function useCards() {
     };
   }, [activeCard, purchases, currentDate]);
 
-  /**
-   * Calcula o limite total comprometido (soma de todas as parcelas futuras não liquidadas).
-   */
   const committedLimit = useMemo(() => {
     if (!activeCard) return 0;
     const now = new Date();
@@ -277,15 +263,14 @@ export function useCards() {
     const curYear = now.getFullYear();
 
     const cardPurchases = purchases.filter((p) => p.cardId === activeCard.id);
-
     let remainingTotal = 0;
 
     cardPurchases.forEach((p) => {
-      const [d, m, y] = p.purchaseDate.split('/').map(Number);
-      let firstM = m - 1;
-      let firstY = y;
+      const parts = p.purchaseDate.split('/').map(Number);
+      let firstM = parts[1] - 1;
+      let firstY = parts[2];
 
-      if (d >= activeCard.closingDay) {
+      if (parts[0] >= activeCard.closingDay) {
         firstM += 1;
         if (firstM > 11) {
           firstM = 0;
@@ -323,10 +308,9 @@ export function useCards() {
     toggleVisibility,
     cards,
     activeCard,
-    setSelectedCardId,
+    handleSelectCard,
     currentInvoice,
     formattedMonth,
-    committedLimit,
     availableLimit,
     limitUsagePercentage,
     desc,

@@ -1,7 +1,6 @@
 /**
  * ============================================================================
- * TELA DE CONTAS FIXAS
- * Camada de apresentação visual conectada ao hook useFixedBills.
+ * TELA DE CONTAS FIXAS E PARCELAMENTOS
  * ============================================================================
  */
 
@@ -27,7 +26,10 @@ export default function FixedBillsScreen() {
     isVisible,
     toggleVisibility,
     bills,
-    totalAmount,
+    cardInstallments,
+    grandTotalAmount,
+    totalBillsAmount,
+    totalCardInstallments,
     title,
     setTitle,
     value,
@@ -58,7 +60,7 @@ export default function FixedBillsScreen() {
       {/* --- CABEÇALHO --- */}
       <View style={[styles.header, { backgroundColor: theme.header }]}>
         <View style={styles.headerTop}>
-          <Text style={styles.headerTitle}>Contas Fixas</Text>
+          <Text style={styles.headerTitle}>Contas & Recorrências</Text>
           <View style={styles.headerRightActions}>
             <TouchableOpacity onPress={toggleVisibility} style={styles.headerIconBtn}>
               <Ionicons
@@ -70,11 +72,21 @@ export default function FixedBillsScreen() {
           </View>
         </View>
 
-        <Text style={styles.headerLabel}>Total Previsto no Mês</Text>
-        <Text style={styles.headerTotal}>{renderValue(totalAmount)}</Text>
+        <Text style={styles.headerLabel}>Total Comprometido no Mês</Text>
+        <Text style={styles.headerTotal}>{renderValue(grandTotalAmount)}</Text>
+
+        {/* Detalhamento do Total */}
+        <View style={{ flexDirection: 'row', gap: 15, marginTop: 8 }}>
+          <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: 12 }}>
+            Fixas: {renderValue(totalBillsAmount)}
+          </Text>
+          <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: 12 }}>
+            Cartões: {renderValue(totalCardInstallments)}
+          </Text>
+        </View>
       </View>
 
-      {/* --- FORMULÁRIO DE ENTRADA / EDIÇÃO --- */}
+      {/* --- FORMULÁRIO DE NOVA CONTA FIXA --- */}
       <View style={[styles.inputCard, { backgroundColor: theme.card }]}>
         <Text style={[styles.inputCardTitle, { color: theme.text }]}>
           {editingId ? 'Editar Conta' : 'Nova Conta Fixa'}
@@ -86,7 +98,7 @@ export default function FixedBillsScreen() {
               styles.input,
               { flex: 1.5, backgroundColor: theme.input, color: theme.text },
             ]}
-            placeholder="Nome (ex: Internet)"
+            placeholder="Nome (ex: Internet, Luz)"
             placeholderTextColor={theme.subtext}
             value={title}
             onChangeText={setTitle}
@@ -148,14 +160,14 @@ export default function FixedBillsScreen() {
         </View>
       </View>
 
-      {/* --- LISTA DE CONTAS CADASTRADAS --- */}
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* --- LISTA DE CONTAS FIXAS TRADICIONAIS --- */}
         <View style={styles.listContainer}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
-            Compromissos do Mês
+            Boletos & Despesas Fixas
           </Text>
 
           {bills.length === 0 ? (
@@ -241,6 +253,85 @@ export default function FixedBillsScreen() {
             })
           )}
         </View>
+
+        {/* --- LISTA DE PARCELAS DE CARTÕES DE CRÉDITO --- */}
+        {cardInstallments.length > 0 && (
+          <View style={[styles.listContainer, { marginTop: 20 }]}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+              Parcelamentos em Cartão (Este Mês)
+            </Text>
+
+            {cardInstallments.map((inst, index) => {
+              const paid = isBillPaid(inst.purchaseId);
+              const isLate = !paid && inst.dueDay < todayDay;
+
+              return (
+                <View
+                  key={`${inst.purchaseId}-${index}`}
+                  style={[styles.billCard, { backgroundColor: theme.card }]}
+                >
+                  <TouchableOpacity
+                    style={[styles.checkButton, paid && styles.checkButtonActive]}
+                    onPress={() => handleTogglePayment(inst.purchaseId)}
+                  >
+                    {paid && <MaterialIcons name="check" size={18} color="#fff" />}
+                  </TouchableOpacity>
+
+                  <View style={styles.billInfo}>
+                    <View style={styles.billTitleRow}>
+                      <Text
+                        style={[
+                          styles.billTitle,
+                          { color: theme.text },
+                          paid && [styles.billPaidText, { color: theme.subtext }],
+                        ]}
+                      >
+                        {inst.description}
+                      </Text>
+                      <View
+                        style={{
+                          backgroundColor: inst.cardColor,
+                          paddingHorizontal: 7,
+                          paddingVertical: 2,
+                          borderRadius: 6,
+                        }}
+                      >
+                        <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold' }}>
+                          {inst.cardName}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <Text
+                      style={[
+                        styles.billSubtext,
+                        { color: theme.subtext },
+                        isLate && { color: '#ef4444', fontWeight: 'bold' },
+                      ]}
+                    >
+                      {paid
+                        ? 'Liquidada neste mês'
+                        : `Parcela ${inst.currentInstallment} de ${inst.totalInstallments} • Vence dia ${inst.dueDay}`}
+                    </Text>
+                  </View>
+
+                  <View style={styles.billValueContainer}>
+                    <Text
+                      style={[
+                        styles.billValue,
+                        { color: theme.text },
+                        paid && { color: theme.subtext, textDecorationLine: 'line-through' },
+                        isLate && { color: '#ef4444' },
+                      ]}
+                    >
+                      {renderValue(inst.value)}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

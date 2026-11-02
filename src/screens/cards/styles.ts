@@ -215,4 +215,32 @@ export const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 'bold',
   },
+
+  // --- SELETOR DE CARTEIRA (HORIZONTAL) ---
+  walletScroll: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    gap: 10,
+  },
+  walletCardTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  walletCardTabText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  walletBadgeActive: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#fff',
+  },
 });
+
