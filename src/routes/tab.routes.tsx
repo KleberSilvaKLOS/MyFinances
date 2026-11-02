@@ -1,138 +1,139 @@
+/**
+ * ============================================================================
+ * ROTAS DE NAVEGAÇÃO POR ABAS (BOTTOM TABS)
+ * Integração das 5 telas modulares com suporte a tema dinâmico e ícones.
+ * =====================================    =======================================
+ */
+
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { MaterialIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 
 import { useTheme } from '../context/ThemeContext';
 
-import HomeScreen from '../screens/home/home';
+// Importação das telas refatoradas
+import HomeScreen from '../screens/home/home';  
 import ExpensesScreen from '../screens/expenses/expenses';
-import FixedBillsScreen from '../screens/fixedbills/fixedbills';
+import FixedBillsScreen from '../screens/fixedbills/fixedbills';  
+import CardsScreen from '../screens/cards/cards';
 import SummaryScreen from '../screens/summary/summary';
-import InvestmentsScreen from '../screens/investments/investments';
+
+console.log('Telas carregadas:', {
+  HomeScreen: !!HomeScreen,
+  ExpensesScreen: !!ExpensesScreen,
+  FixedBillsScreen: !!FixedBillsScreen,
+  CardsScreen: !!CardsScreen,
+  SummaryScreen: !!SummaryScreen,
+});
 
 const Tab = createBottomTabNavigator();
 
-export function TabRoutes() {
-  const { isDark } = useTheme();
-  const insets = useSafeAreaInsets();
+export default function TabRoutes() {
+  const { theme, isDark } = useTheme();
 
   return (
     <Tab.Navigator
       initialRouteName="Home"
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: false,
+        tabBarShowLabel: true,
+        tabBarActiveTintColor: '#3870d8',
+        tabBarInactiveTintColor: isDark ? '#64748b' : '#94a3b8',
         tabBarStyle: {
-          position: 'absolute',
-          bottom: insets.bottom,
-          left: 20,
-          right: 20,
-          elevation: 0,
-          backgroundColor: isDark ? '#0f172a' : '#ffffff00',
-          borderRadius: 2,
-          height: 50,
-          borderTopWidth: 0,
-          shadowOpacity: 0,
+          backgroundColor: theme.card,
+          borderTopColor: theme.border,
+          height: Platform.OS === 'ios' ? 88 : 65,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 10,
+          paddingTop: 8,
+          borderTopWidth: 1,
+          elevation: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
         },
       }}
     >
-      <Tab.Screen
-        name="Gastos"
-        component={ExpensesScreen}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <View style={focused ? styles.iconFocused : styles.iconUnfocused}>
-              <MaterialIcons name="attach-money"
-              size={30}
-              color={focused ? '#fff' : (isDark ? '#64748b' : '#94a3b8')}
-              />
-            </View>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Fixas"
-        component={FixedBillsScreen}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <View style={focused ? styles.iconFocused : styles.iconUnfocused}>
-              <MaterialIcons
-                name="event-note"
-                size={30}
-                color={focused ? '#fff' : (isDark ? '#64748b' : '#94a3b8')}
-              />
-            </View>
-          ),
-        }}
-      />
+      {/* 1. Tela Inicial */}
       <Tab.Screen
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarIcon: ({ focused }) => (
-            <View style={focused ? styles.iconFocused : styles.iconUnfocused}>
-              <MaterialIcons
-                name="home"
-                size={30}
-                color={focused ? '#fff' : (isDark ? '#64748b' : '#94a3b8')}
-              />
-            </View>
+          tabBarLabel: 'Início',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? 'home' : 'home-outline'}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
+
+      {/* 2. Lançamentos / Gastos */}
+      <Tab.Screen
+        name="Gastos"
+        component={ExpensesScreen}
+        options={{
+          tabBarLabel: 'Gastos',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? 'wallet' : 'wallet-outline'}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      {/* 3. Contas Fixas */}
+      <Tab.Screen
+        name="Fixas"
+        component={FixedBillsScreen}
+        options={{
+          tabBarLabel: 'Fixas',
+          tabBarIcon: ({ color, size, focused }) => (
+            <MaterialIcons
+              name={focused ? 'receipt-long' : 'receipt'}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      {/* 4. Gestão de Cartões de Crédito */}
+      <Tab.Screen
+        name="Cartoes"
+        component={CardsScreen}
+        options={{
+          tabBarLabel: 'Cartões',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? 'card' : 'card-outline'}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      {/* 5. Resumo e Gráficos */}
       <Tab.Screen
         name="Resumo"
         component={SummaryScreen}
         options={{
-          tabBarIcon: ({ focused }) => (
-            <View style={focused ? styles.iconFocused : styles.iconUnfocused}>
-              <MaterialIcons
-                name="pie-chart"
-                size={30}
-                color={focused ? '#fff' : (isDark ? '#64748b' : '#94a3b8')}
-              />
-            </View>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Investimentos"
-        component={InvestmentsScreen}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <View style={focused ? styles.iconFocused : styles.iconUnfocused}>
-              <MaterialIcons
-                name="trending-up"
-                size={30}
-                color={focused ? '#fff' : (isDark ? '#64748b' : '#94a3b8')}
-              />
-            </View>
+          tabBarLabel: 'Resumo',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? 'pie-chart' : 'pie-chart-outline'}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
     </Tab.Navigator>
   );
-}
-
-const styles = StyleSheet.create({
-  iconFocused: {
-    width: 55,
-    height: 55,
-    backgroundColor: '#3670d8',
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 25,
-    elevation: 10,
-    shadowColor: '#3870d8',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.4,
-    shadowRadius: 5,
-  },
-  iconUnfocused: {
-    justifyContent: 'center',
-    alignItems: 'center',
   }
-});
