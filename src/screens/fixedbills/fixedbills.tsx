@@ -1,526 +1,247 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  View, Text, StyleSheet, FlatList, 
-  TextInput, TouchableOpacity, Modal, TouchableWithoutFeedback, Alert, Platform, StatusBar, ScrollView
+/**
+ * ============================================================================
+ * TELA DE CONTAS FIXAS
+ * Camada de apresentação visual conectada ao hook useFixedBills.
+ * ============================================================================
+ */
+
+import React from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  StatusBar,
 } from 'react-native';
-// 1. CORREÇÃO: Importando SafeAreaView da biblioteca certa
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
-import { useTheme } from '../../context/ThemeContext'; 
 
-interface FixedBill {
-  id: string;
-  title: string;
-  value: number;
-  dueDay: number; 
-}
-
-type BillStatus = 'paid' | 'pending' | 'overdue';
+import { useFixedBills } from './useFixedBills';
+import { styles } from './styles';
 
 export default function FixedBillsScreen() {
-  const { isDark } = useTheme(); 
-  const [bills, setBills] = useState<FixedBill[]>([]);
-  const [paymentsMap, setPaymentsMap] = useState<{[key: string]: boolean}>({}); 
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [isVisible, setIsVisible] = useState(true);
-  const [title, setTitle] = useState('');
-  const [value, setValue] = useState('');
-  const [dueDay, setDueDay] = useState('');
-  const [totalFixed, setTotalFixed] = useState(0);
-  // Removi o 'errors' que não estava sendo usado para limpar o código
-
-  const theme = {
-    background: isDark ? '#0f172a' : '#fefefe',
-    header: isDark ? '#1e293b' : '#3870d8',
-    card: isDark ? '#1e293b' : '#ffffff',
-    text: isDark ? '#f8fafc' : '#334155',
-    subtext: isDark ? '#94a3b8' : '#64748b',
-    input: isDark ? '#334155' : '#f1f5f9',
-    modal: isDark ? '#1e293b' : '#ffffff',
-    iconBox: isDark ? '#334155' : '#f1f5f9'
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      const loadSyncData = async () => {
-        const saved = await AsyncStorage.getItem('@myfinance:visibility');
-        if (saved !== null) {
-          setIsVisible(JSON.parse(saved));
-        }
-        loadData();
-      };
-      loadSyncData();
-    }, [])
-  );
-
-  const toggleVisibility = async () => {
-    const newValue = !isVisible;
-    setIsVisible(newValue);
-    await AsyncStorage.setItem('@myfinance:visibility', JSON.stringify(newValue));
-  };
-
-  useEffect(() => {
-    // Blindagem: garante que bills é array antes de rodar reduce
-    if (Array.isArray(bills)) {
-      const total = bills.reduce((acc, bill) => acc + bill.value, 0);
-      setTotalFixed(total);
-    }
-  }, [bills]);
-
-  async function loadData() {
-    try {
-      const billsJson = await AsyncStorage.getItem('@myfinance:fixed_bills');
-      // 2. CORREÇÃO: (JSON.parse(...) || []) evita o erro de "null value"
-      setBills(billsJson ? (JSON.parse(billsJson) || []) : []);
-      
-      const paymentsJson = await AsyncStorage.getItem('@myfinance:bill_payments');
-      setPaymentsMap(paymentsJson ? (JSON.parse(paymentsJson) || {}) : {});
-    } catch (e) { console.log(e); }
-  }
-
-  async function saveData(newBills: FixedBill[]) {
-    try {
-      await AsyncStorage.setItem('@myfinance:fixed_bills', JSON.stringify(newBills));
-      setBills(newBills);
-    } catch (e) { console.log(e); }
-  }
-
-  async function savePaymentStatus(newMap: {[key: string]: boolean}) {
-    try {
-      await AsyncStorage.setItem('@myfinance:bill_payments', JSON.stringify(newMap));
-      setPaymentsMap(newMap);
-    } catch (e) { console.log(e); }
-  }
-
-  const getBillStatus = (bill: FixedBill): BillStatus => {
-    const month = selectedDate.getMonth();
-    const year = selectedDate.getFullYear();
-    const paymentKey = `${bill.id}_${month}_${year}`;
-    if (paymentsMap[paymentKey]) return 'paid';
-    const dueDate = new Date(year, month, bill.dueDay);
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    dueDate.setHours(0,0,0,0);
-    if (today > dueDate) return 'overdue';
-    return 'pending';
-  };
-
-  // 3. CORREÇÃO: Nova lógica de togglePayment com integração ao Saldo Global
-  const togglePayment = async (bill: FixedBill) => {
-    const month = selectedDate.getMonth();
-    const year = selectedDate.getFullYear();
-    const paymentKey = `${bill.id}_${month}_${year}`;
-    
-    // Descobre se a ação é PAGAR (true) ou DESPAGAR (false)
-    const isPaying = !paymentsMap[paymentKey];
-    
-    // Atualiza estado local (visual)
-    const newMap = { ...paymentsMap, [paymentKey]: isPaying };
-    await savePaymentStatus(newMap);
-
-    // Atualiza Saldo Global (Home)
-    try {
-      const balanceKey = '@myfinance:balance'; // Mesma chave usada na Home
-      const currentBalanceStr = await AsyncStorage.getItem(balanceKey);
-      let currentBalance = currentBalanceStr ? parseFloat(currentBalanceStr) : 0;
-
-      // Se não for número válido, zera
-      if (isNaN(currentBalance)) currentBalance = 0;
-
-      if (isPaying) {
-        currentBalance -= bill.value; // Desconta
-      } else {
-        currentBalance += bill.value; // Estorna (devolve)
-      }
-
-      await AsyncStorage.setItem(balanceKey, JSON.stringify(currentBalance));
-      
-    } catch (e) {
-      console.log("Erro ao atualizar saldo global:", e);
-    }
-  };
-
-  const handleSave = () => {
-    if (!title || !value || !dueDay) {
-      Alert.alert('Erro', 'Preencha todos os campos');
-      return;
-    }
-
-    const day = parseInt(dueDay);
-    if (isNaN(day) || day < 1 || day > 31) {
-      Alert.alert("Dia Inválido", "Por favor, insira um dia entre 1 e 31.");
-      return; 
-    }
-
-    const numericValue = parseFloat(value.replace(',', '.'));
-    // Blindagem contra array nulo
-    let newBillsList = Array.isArray(bills) ? [...bills] : [];
-    
-    if (editingId) {
-      newBillsList = newBillsList.map(b => b.id === editingId ? { ...b, title, value: numericValue, dueDay: day } : b);
-    } else {
-      const newBill: FixedBill = { id: String(new Date().getTime()), title, value: numericValue, dueDay: day };
-      newBillsList = [...newBillsList, newBill];
-    }
-    saveData(newBillsList);
-    setModalVisible(false);
-  };
-
-  const handleDelete = () => {
-    if (!editingId) return;
-    Alert.alert("Excluir Conta", "Isso removerá esta conta fixa permanentemente.", [
-      { text: "Cancelar", style: 'cancel' },
-      { text: "Excluir", style: 'destructive', onPress: () => {
-          // Blindagem contra array nulo
-          const currentBills = Array.isArray(bills) ? bills : [];
-          const filtered = currentBills.filter(b => b.id !== editingId);
-          saveData(filtered);
-          setModalVisible(false);
-      }}
-    ]);
-  };
-
-  const changeMonth = (direction: 'prev' | 'next') => {
-    const newDate = new Date(selectedDate);
-    newDate.setMonth(selectedDate.getMonth() + (direction === 'next' ? 1 : -1));
-    setSelectedDate(newDate);
-  };
-
-  const formatMonthYear = (date: Date) => {
-    const month = date.toLocaleString('pt-BR', { month: 'long' });
-    const year = date.getFullYear();
-    return `${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`;
-  };
-
-  const formatCurrency = (val: number) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  const renderValue = (val: number) => isVisible ? formatCurrency(val) : '••••••';
-
-  const renderItem = ({ item }: { item: FixedBill }) => {
-    const status = getBillStatus(item);
-    let statusColor = '#f59e0b'; 
-    let statusText = 'Pendente';
-    let cardBorderColor = isDark ? '#334155' : 'transparent';
-    
-    if (status === 'paid') { statusColor = '#13ec6d'; statusText = 'Pago'; }
-    else if (status === 'overdue') { statusColor = '#ef4444'; statusText = 'Atrasado'; cardBorderColor = '#ef4444'; }
-
-    return (
-      <TouchableOpacity 
-        style={[styles.card, { backgroundColor: theme.card, borderColor: cardBorderColor, borderWidth: 1 }]} 
-        onPress={() => {
-          setEditingId(item.id); setTitle(item.title); setValue(String(item.value)); setDueDay(String(item.dueDay)); setModalVisible(true);
-        }}
-        activeOpacity={0.7}
-      >
-        <View style={styles.cardLeft}>
-          <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.header} />
-          <TouchableOpacity 
-            style={[styles.iconBox, { backgroundColor: status === 'overdue' ? '#fee2e2' : theme.iconBox }]}
-            onPress={() => togglePayment(item)}
-          >
-            <MaterialIcons 
-              name={status === 'paid' ? "check-circle" : "radio-button-unchecked"} 
-              size={24} 
-              color={status === 'paid' ? '#13ec6d' : (status === 'overdue' ? '#ef4444' : '#cbd5e1')} 
-            />
-          </TouchableOpacity>
-          <View>
-            <Text style={[styles.cardTitle, { color: theme.text }]}>{item.title}</Text>
-            <Text style={[styles.cardDate, { color: theme.subtext }]}>Vence dia {item.dueDay}</Text>
-          </View>
-        </View>
-        <View style={styles.cardRight}>
-          <Text style={[styles.cardValue, { color: theme.text }]}>{renderValue(item.value)}</Text>
-          <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-            <Text style={styles.statusText}>{statusText}</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const {
+    theme,
+    isDark,
+    isVisible,
+    toggleVisibility,
+    bills,
+    totalAmount,
+    title,
+    setTitle,
+    value,
+    setValue,
+    dueDay,
+    setDueDay,
+    editingId,
+    todayDay,
+    handleSaveBill,
+    handleStartEdit,
+    handleCancelEdit,
+    handleDeleteBill,
+    handleTogglePayment,
+    isBillPaid,
+    renderValue,
+  } = useFixedBills();
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScrollView style={{marginBottom:40 + (Platform.OS==='android'?StatusBar.currentHeight||0:0)}} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-        <StatusBar barStyle="light-content" backgroundColor={theme.header} />
-        <View style={[styles.header, { backgroundColor: theme.header }]}>
-          <View style={styles.headerTop}>
-            <Text style={styles.headerTitle}>Contas Fixas</Text>
-            <View style={styles.headerRightActions}>
-              <TouchableOpacity onPress={toggleVisibility} style={styles.btnEyeHeader}>
-                <Ionicons name={isVisible ? "eye" : "eye-off"} size={22} color="#ffffff" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnAdd} onPress={() => { setEditingId(null); setTitle(''); setValue(''); setDueDay(''); setModalVisible(true); }}>
-                <MaterialIcons name="add" size={22} color="#ffffff" />
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={styles.totalContainer}>
-            <Text style={styles.totalLabel}>Total Mensal Previsto</Text>
-            <Text style={styles.totalValue}>{renderValue(totalFixed)}</Text>
-          </View>
-        </View>
-          <View style={[styles.dateFilter, { backgroundColor: theme.card }]}>
-            <TouchableOpacity onPress={() => changeMonth('prev')} style={styles.arrowBtn}><MaterialIcons name="chevron-left" size={24} color={theme.text} /></TouchableOpacity>
-            <Text style={[styles.dateText, { color: theme.text }]}>{formatMonthYear(selectedDate)}</Text>
-            <TouchableOpacity onPress={() => changeMonth('next')} style={styles.arrowBtn}><MaterialIcons name="chevron-right" size={24} color={theme.text} /></TouchableOpacity>
-          </View>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+      edges={['top']}
+    >
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.header}
+      />
 
-        <View style={styles.content}>
-            <View>
-              {(!bills || bills.length === 0) ? (
-                <View style={styles.emptyState}>
-                  <Text style={styles.emptyText}>Nenhuma conta cadastrada.</Text>
-                </View>
-              ) : (
-                bills.map((item) => (
-                  <View key={item.id}>
-                    {renderItem({ item })}
-                  </View>
-                ))
-              )}
-            </View>
-        </View>
-        <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback onPress={() => setModalVisible(false)}><View style={styles.modalBackdrop} /></TouchableWithoutFeedback>
-            <View style={[styles.modalContent, { backgroundColor: theme.modal }]}>
-              <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: isDark ? '#3870d8' : '#3870d8' }]}>{editingId ? 'Editar Conta' : 'Nova Conta'}</Text>
-                <TouchableOpacity onPress={() => setModalVisible(false)}><MaterialIcons name="close" size={24} color={theme.subtext} /></TouchableOpacity>
-              </View>
-              <Text style={[styles.label, { color: theme.subtext }]}>Nome</Text>
-              <TextInput style={[styles.input, { backgroundColor: theme.input, color: theme.text }]} value={title} onChangeText={setTitle} placeholder="Ex: Aluguel" placeholderTextColor={isDark ? '#64748b' : '#94a3b8'} />
-              <View style={{ flexDirection: 'row', gap: 15 }}>
-                <View style={{ flex: 1 }}><Text style={[styles.label, { color: theme.subtext }]}>Valor</Text><TextInput style={[styles.input, { backgroundColor: theme.input, color: theme.text }]} value={value} onChangeText={setValue} keyboardType="numeric" placeholder="0,00" placeholderTextColor={isDark ? '#64748b' : '#94a3b8'} /></View>
-                <View style={{ flex: 1 }}><Text style={[styles.label, { color: theme.subtext }]}>Dia</Text><TextInput style={[styles.input, { backgroundColor: theme.input, color: theme.text }]} value={dueDay} onChangeText={setDueDay} keyboardType="numeric" placeholder="1-31" maxLength={2} placeholderTextColor={isDark ? '#64748b' : '#94a3b8'} /></View>
-              </View>
-              <TouchableOpacity style={styles.btnSave} onPress={handleSave}><Text style={styles.btnSaveText}>SALVAR</Text></TouchableOpacity>
-              {editingId && (
-                <TouchableOpacity style={styles.btnDelete} onPress={handleDelete}>
-                  <MaterialIcons name="delete-outline" size={20} color="#ef4444" /><Text style={styles.btnDeleteText}>Excluir conta</Text>
-                </TouchableOpacity>
-              )}
-            </View>
+      {/* --- CABEÇALHO --- */}
+      <View style={[styles.header, { backgroundColor: theme.header }]}>
+        <View style={styles.headerTop}>
+          <Text style={styles.headerTitle}>Contas Fixas</Text>
+          <View style={styles.headerRightActions}>
+            <TouchableOpacity onPress={toggleVisibility} style={styles.headerIconBtn}>
+              <Ionicons
+                name={isVisible ? 'eye' : 'eye-off'}
+                size={22}
+                color="#ffffff"
+              />
+            </TouchableOpacity>
           </View>
-        </Modal>
+        </View>
+
+        <Text style={styles.headerLabel}>Total Previsto no Mês</Text>
+        <Text style={styles.headerTotal}>{renderValue(totalAmount)}</Text>
+      </View>
+
+      {/* --- FORMULÁRIO DE ENTRADA / EDIÇÃO --- */}
+      <View style={[styles.inputCard, { backgroundColor: theme.card }]}>
+        <Text style={[styles.inputCardTitle, { color: theme.text }]}>
+          {editingId ? 'Editar Conta' : 'Nova Conta Fixa'}
+        </Text>
+
+        <View style={styles.inputsRow}>
+          <TextInput
+            style={[
+              styles.input,
+              { flex: 1.5, backgroundColor: theme.input, color: theme.text },
+            ]}
+            placeholder="Nome (ex: Internet)"
+            placeholderTextColor={theme.subtext}
+            value={title}
+            onChangeText={setTitle}
+          />
+
+          <TextInput
+            style={[
+              styles.input,
+              { flex: 1, backgroundColor: theme.input, color: theme.text },
+            ]}
+            placeholder="Valor"
+            placeholderTextColor={theme.subtext}
+            keyboardType="numeric"
+            value={value}
+            onChangeText={setValue}
+          />
+
+          <TextInput
+            style={[
+              styles.input,
+              { width: 65, backgroundColor: theme.input, color: theme.text, textAlign: 'center' },
+            ]}
+            placeholder="Dia"
+            placeholderTextColor={theme.subtext}
+            keyboardType="numeric"
+            maxLength={2}
+            value={dueDay}
+            onChangeText={setDueDay}
+          />
+        </View>
+
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          {editingId && (
+            <TouchableOpacity
+              style={[styles.btnSubmit, { flex: 1, backgroundColor: '#64748b' }]}
+              onPress={handleCancelEdit}
+            >
+              <Text style={styles.btnSubmitText}>Cancelar</Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={[
+              styles.btnSubmit,
+              { flex: 2 },
+              editingId ? { backgroundColor: '#fbbf24' } : null,
+            ]}
+            onPress={handleSaveBill}
+          >
+            <MaterialIcons
+              name={editingId ? 'check' : 'add'}
+              size={22}
+              color="#fff"
+            />
+            <Text style={styles.btnSubmitText}>
+              {editingId ? 'Atualizar Conta' : 'Adicionar Conta'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* --- LISTA DE CONTAS CADASTRADAS --- */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.listContainer}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            Compromissos do Mês
+          </Text>
+
+          {bills.length === 0 ? (
+            <Text style={[styles.emptyText, { color: theme.subtext }]}>
+              Nenhuma conta fixa cadastrada.
+            </Text>
+          ) : (
+            bills.map((bill) => {
+              const paid = isBillPaid(bill.id);
+              const isLate = !paid && bill.dueDay < todayDay;
+              const isEditing = editingId === bill.id;
+
+              return (
+                <View
+                  key={bill.id}
+                  style={[
+                    styles.billCard,
+                    { backgroundColor: theme.card },
+                    isEditing && styles.billCardEditing,
+                  ]}
+                >
+                  <TouchableOpacity
+                    style={[styles.checkButton, paid && styles.checkButtonActive]}
+                    onPress={() => handleTogglePayment(bill.id)}
+                  >
+                    {paid && <MaterialIcons name="check" size={18} color="#fff" />}
+                  </TouchableOpacity>
+
+                  <View style={styles.billInfo}>
+                    <View style={styles.billTitleRow}>
+                      <Text
+                        style={[
+                          styles.billTitle,
+                          { color: theme.text },
+                          paid && [styles.billPaidText, { color: theme.subtext }],
+                        ]}
+                      >
+                        {bill.title}
+                      </Text>
+                      {isLate && (
+                        <View style={styles.badgeLate}>
+                          <Text style={styles.badgeLateText}>ATRASADA</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <Text
+                      style={[
+                        styles.billSubtext,
+                        { color: theme.subtext },
+                        isLate && { color: '#ef4444', fontWeight: 'bold' },
+                      ]}
+                    >
+                      {paid
+                        ? 'Liquidada neste mês'
+                        : `Vence no dia ${bill.dueDay}`}
+                    </Text>
+                  </View>
+
+                  <View style={styles.billValueContainer}>
+                    <Text
+                      style={[
+                        styles.billValue,
+                        { color: theme.text },
+                        paid && { color: theme.subtext, textDecorationLine: 'line-through' },
+                        isLate && { color: '#ef4444' },
+                      ]}
+                    >
+                      {renderValue(bill.value)}
+                    </Text>
+
+                    <View style={styles.billActions}>
+                      <TouchableOpacity onPress={() => handleStartEdit(bill)}>
+                        <MaterialIcons name="edit" size={18} color="#fbbf24" />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleDeleteBill(bill.id)}>
+                        <MaterialIcons name="delete" size={18} color="#ef4444" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              );
+            })
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    // Com o novo SafeArea, isso pode ser opcional, mas mal não faz
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 ,
-    marginTop: -35
-  },
-  content: { 
-    flex: 1, 
-    padding: 20 
-  },
-  header: { 
-    padding: 20, 
-    paddingTop: 31.5,
-    paddingBottom: 30, 
-    borderBottomLeftRadius: 30, 
-    borderBottomRightRadius: 30, 
-    elevation: 5, 
-  },
-  headerTop: { 
-    flexDirection: 'row', 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    position: 'relative', 
-    marginBottom: 15
-  },
-  headerTitle: { 
-    color: '#ffffffaa', 
-    fontSize: 14, 
-    fontWeight: 'bold', 
-    textTransform: 'uppercase' 
-  },
-  headerRightActions: { 
-    position: 'absolute', 
-    right: 0, 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 10
-  },
-  btnEyeHeader: { 
-    width: 42, 
-    height: 42, 
-    borderRadius: 21, 
-    backgroundColor: 'rgba(255, 255, 255, 0.12)', 
-    justifyContent: 'center', 
-    alignItems: 'center' 
-  },
-  btnAdd: { 
-    width: 42, 
-    height: 42, 
-    borderRadius: 21, 
-    backgroundColor: 'rgba(255, 255, 255, 0.12)', 
-    justifyContent: 'center', 
-    alignItems: 'center'  
-  },
-  totalContainer: { 
-    alignItems: 'center', 
-    marginBottom: 0 
-  },
-  totalLabel: { 
-    color: '#ffffff', 
-    fontSize: 16, 
-    fontWeight: '600',
-    marginBottom: 2 
-  },
-  totalValue: { 
-    color: '#fff', 
-    fontSize: 36, 
-    fontWeight: 'bold' 
-  },
-  dateFilter: { 
-    flex: 0.48,
-    marginTop: -25,
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    gap: 70, 
-    paddingVertical: 8, 
-    paddingHorizontal: 15, 
-    borderRadius: 20, 
-    height: 40, 
-    alignSelf: 'center', 
-    elevation: 20
-  },
-  dateText: { 
-    color: '#fff', 
-    fontSize: 16, 
-    fontWeight: 'bold', 
-    minWidth: 120, 
-    textAlign: 'center' 
-  },
-  arrowBtn: { 
-    padding: 2 
-  },
-  card: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    padding: 15, 
-    borderRadius: 15, 
-    marginBottom: 12, 
-    elevation: 2 
-  },
-  cardLeft: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 12 
-  },
-  iconBox: { 
-    width: 45, 
-    height: 45, 
-    borderRadius: 12, 
-    justifyContent: 'center', 
-    alignItems: 'center' 
-  },
-  cardTitle: { 
-    fontSize: 16, 
-    fontWeight: 'bold' 
-  },
-  cardDate: { 
-    fontSize: 12 
-  },
-  cardRight: { 
-    alignItems: 'flex-end', 
-    gap: 5 
-  },
-  cardValue: { 
-    fontSize: 16, 
-    fontWeight: 'bold' 
-  },
-  statusBadge: { 
-    paddingHorizontal: 8, 
-    paddingVertical: 2, 
-    borderRadius: 10 
-  },
-  statusText: { 
-    color: '#fff', 
-    fontSize: 10, 
-    fontWeight: 'bold', 
-    textTransform: 'uppercase' 
-  },
-  emptyState: { 
-    alignItems: 'center', 
-    marginTop: 50 
-  },
-  emptyText: { 
-    color: '#94a3b8', 
-    fontSize: 16 
-  },
-  modalOverlay: { 
-    flex: 1, 
-    backgroundColor: 'rgba(0,0,0,0.5)', 
-    justifyContent: 'center', 
-    padding: 20 
-  },
-  modalBackdrop: { 
-    position: 'absolute', 
-    top: 0, 
-    bottom: 0, 
-    left: 0, 
-    right: 0 
-  },
-  modalContent: { 
-    borderRadius: 20, 
-    padding: 25, 
-    elevation: 10 
-  },
-  modalHeader: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    marginBottom: 20 
-  },
-  modalTitle: { 
-    fontSize: 20, 
-    fontWeight: 'bold' 
-  },
-  label: { 
-    marginBottom: 5, 
-    fontWeight: '600' 
-  },
-  input: { 
-    padding: 12, 
-    borderRadius: 10, 
-    fontSize: 16, 
-    marginBottom: 15 
-  },
-  btnSave: { 
-    backgroundColor: '#3870d8', 
-    padding: 15, 
-    borderRadius: 12, 
-    alignItems: 'center', 
-    marginTop: 10 
-  },
-  btnSaveText: { 
-    color: '#fff', 
-    fontWeight: 'bold', 
-    fontSize: 16 
-  },
-  btnDelete: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    marginTop: 20, 
-    gap: 5 
-  },
-  btnDeleteText: { 
-    color: '#ef4444', 
-    fontWeight: '600' 
-  }
-});
