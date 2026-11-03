@@ -1,43 +1,35 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { initializeAuth, getReactNativePersistence, getAuth, Auth } from "firebase/auth";
-import { getFirestore, Firestore } from "firebase/firestore";
-import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import * as FirebaseAuth from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-/**
- * Configuração do Firebase.
- * Insira sua apiKey válida do Console do Firebase quando for utilizar autenticação remota.
- */
 const firebaseConfig = {
-  apiKey: "AIzaSyD-SUA_CHAVE_AQUI", // Insira sua API Key real aqui
-  authDomain: "myfinance-79f20.firebaseapp.com",
-  projectId: "myfinance-79f20",
-  storageBucket: "myfinance-79f20.firebasestorage.app",
-  messagingSenderId: "1077356751416",
-  appId: "1:1077356751416:web:d9ca422304e33619a614cd",
-  measurementId: "G-3ESMJKX06K"
+  apiKey: "AIzaSyB4vQme3TW8s31nTF7_FlqRMaexYznyrac",
+  authDomain: "my-finances-app-abc25.firebaseapp.com",
+  databaseURL: "https://my-finances-app-abc25-default-rtdb.firebaseio.com",
+  projectId: "my-finances-app-abc25",
+  storageBucket: "my-finances-app-abc25.firebasestorage.app",
+  messagingSenderId: "101659990601",
+  appId: "1:101659990601:web:2d3f42d1801ee9d2c67d98",
+  measurementId: "G-9SZ493EE25"
 };
 
-let app: any = null;
-let auth: Auth | any = null;
-let db: Firestore | any = null;
+// 1. Inicializa o Firebase App sem duplicar instâncias
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Inicializa o Firebase apenas se houver uma chave configurada, evitando quebrar o app local
-if (firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("SUA_CHAVE_AQUI")) {
-  try {
-    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+// 2. Inicializa o Auth com AsyncStorage seguro contra erros de tipagem e Fast Refresh
+let auth: FirebaseAuth.Auth;
 
-    try {
-      auth = initializeAuth(app, {
-        persistence: getReactNativePersistence(ReactNativeAsyncStorage)
-      });
-    } catch {
-      auth = getAuth(app);
-    }
-
-    db = getFirestore(app);
-  } catch (error) {
-    console.warn("Aviso: Falha ao inicializar Firebase. O app seguirá em modo offline.", error);
-  }
+try {
+  const getPersistence = (FirebaseAuth as any).getReactNativePersistence;
+  auth = FirebaseAuth.initializeAuth(app, {
+    persistence: getPersistence ? getPersistence(AsyncStorage) : undefined,
+  });
+} catch (error) {
+  // Caso o Auth já tenha sido inicializado durante o Fast Refresh do Expo
+  auth = FirebaseAuth.getAuth(app);
 }
 
-export { auth, db };
+const db = getFirestore(app);
+
+export { app, auth, db };
