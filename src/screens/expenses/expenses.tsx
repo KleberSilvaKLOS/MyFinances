@@ -1,7 +1,6 @@
 /**
  * ============================================================================
- * TELA DE LANÇAMENTOS E GASTOS (Atualizada e Padronizada)
- * Registro de receitas/despesas, busca textual e listagem detalhada.
+ * TELA DE LANÇAMENTOS E GASTOS
  * ============================================================================
  */
 
@@ -13,22 +12,13 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons, Feather } from '@expo/vector-icons';
 
 import { useExpenses } from './useExpenses';
 import { styles } from './styles';
-
-const DEFAULT_CATEGORIES = [
-  'Alimentação',
-  'Moradia',
-  'Transporte',
-  'Lazer',
-  'Saúde',
-  'Educação',
-  'Outros',
-];
 
 export default function ExpensesScreen() {
   const {
@@ -39,10 +29,20 @@ export default function ExpensesScreen() {
     filteredTransactions,
     search,
     setSearch,
+    categories,
+    isCategoryModalVisible,
+    setIsCategoryModalVisible,
+    isCategoryPickerOpen,
+    setIsCategoryPickerOpen,
+    newCategoryName,
+    setNewCategoryName,
+    handleAddCategory,
+    handleMoveCategory,
+    handleDeleteCategory,
     description,
     setDescription,
     value,
-    setValue,
+    handleValueChange,
     type,
     setType,
     category,
@@ -72,13 +72,30 @@ export default function ExpensesScreen() {
       <View style={[styles.header, { backgroundColor: theme.header }]}>
         <View style={styles.headerTop}>
           <Text style={styles.headerTitle}>Lançamentos</Text>
-          <TouchableOpacity onPress={toggleVisibility} style={styles.headerIconBtn}>
-            <Ionicons
-              name={isVisible ? 'eye' : 'eye-off'}
-              size={20}
-              color="#ffffff"
-            />
-          </TouchableOpacity>
+
+          <View style={styles.headerActionsRow}>
+            {/* Gerenciar categorias cadastradas */}
+            <TouchableOpacity
+              onPress={() => setIsCategoryModalVisible(true)}
+              style={styles.headerIconBtn}
+              activeOpacity={0.8}
+            >
+              <MaterialIcons name="bookmarks" size={19} color="#ffffff" />
+            </TouchableOpacity>
+
+            {/* Alternar visibilidade de valores */}
+            <TouchableOpacity
+              onPress={toggleVisibility}
+              style={styles.headerIconBtn}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name={isVisible ? 'eye' : 'eye-off'}
+                size={19}
+                color="#ffffff"
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <Text style={styles.balanceLabel}>Balanço de Movimentações</Text>
@@ -103,13 +120,13 @@ export default function ExpensesScreen() {
         </View>
       </View>
 
-      {/* --- FORMULÁRIO DE LANÇAMENTO --- */}
+      {/* --- FORMULÁRIO --- */}
       <View style={[styles.formCard, { backgroundColor: theme.card }]}>
         <Text style={[styles.formTitle, { color: theme.text }]}>
           {editingId ? 'Editar Movimentação' : 'Nova Movimentação'}
         </Text>
 
-        {/* Alternador: Despesa / Receita */}
+        {/* Tipo: Despesa / Receita */}
         <View style={styles.typeSelectorRow}>
           <TouchableOpacity
             style={[
@@ -156,70 +173,119 @@ export default function ExpensesScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Inputs Descrição e Valor */}
+        {/* Linha 1: Seletor de Categoria e Input de Valor R$ */}
+        <View style={styles.inputsRow}>
+          <TouchableOpacity
+            style={[
+              styles.categoryTrigger,
+              { backgroundColor: theme.input, borderColor: theme.border },
+            ]}
+            onPress={() => setIsCategoryPickerOpen(!isCategoryPickerOpen)}
+            activeOpacity={0.7}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.fieldMiniLabel, { color: theme.subtext }]}>
+                Categoria
+              </Text>
+              <Text
+                style={[styles.categoryTriggerText, { color: theme.text }]}
+                numberOfLines={1}
+              >
+                {category}
+              </Text>
+            </View>
+            <MaterialIcons
+              name={isCategoryPickerOpen ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+              size={20}
+              color={theme.subtext}
+            />
+          </TouchableOpacity>
+
+          <View
+            style={[
+              styles.valueInputBox,
+              { backgroundColor: theme.input, borderColor: theme.border },
+            ]}
+          >
+            <Text style={[styles.fieldMiniLabel, { color: theme.subtext }]}>
+              Valor
+            </Text>
+            <TextInput
+              style={[styles.inputInner, { color: theme.text }]}
+              placeholder="R$ 0,00"
+              placeholderTextColor={theme.subtext}
+              keyboardType="numeric"
+              value={value}
+              onChangeText={handleValueChange}
+            />
+          </View>
+        </View>
+
+        {/* Seção retrátil aberta ao clicar em Categoria */}
+        {isCategoryPickerOpen && (
+          <View
+            style={[
+              styles.categoryDropdownContainer,
+              { backgroundColor: theme.input, borderColor: theme.border },
+            ]}
+          >
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoryDropdownScroll}
+            >
+              {categories.map((cat) => {
+                const isSelected = category === cat;
+                return (
+                  <TouchableOpacity
+                    key={cat}
+                    style={[
+                      styles.categoryChip,
+                      {
+                        backgroundColor: isSelected
+                          ? '#3870d8'
+                          : isDark
+                          ? '#1e293b'
+                          : '#e2e8f0',
+                      },
+                    ]}
+                    onPress={() => {
+                      setCategory(cat);
+                      setIsCategoryPickerOpen(false);
+                    }}
+                    onLongPress={() => setIsCategoryModalVisible(true)}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryChipText,
+                        { color: isSelected ? '#ffffff' : theme.text },
+                      ]}
+                    >
+                      {cat}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Linha 2: Descrição */}
         <View style={styles.inputsRow}>
           <TextInput
             style={[
               styles.input,
-              { flex: 2, backgroundColor: theme.input, color: theme.text },
+              { flex: 1, backgroundColor: theme.input, color: theme.text },
             ]}
-            placeholder="Descrição (ex: Mercado, Salário)"
+            placeholder="Descrição (ex: Mercado, Combustível, Salário)"
             placeholderTextColor={theme.subtext}
             value={description}
             onChangeText={setDescription}
           />
-
-          <TextInput
-            style={[
-              styles.input,
-              { flex: 1.2, backgroundColor: theme.input, color: theme.text },
-            ]}
-            placeholder="Valor R$"
-            placeholderTextColor={theme.subtext}
-            keyboardType="numeric"
-            value={value}
-            onChangeText={setValue}
-          />
         </View>
 
-        {/* Pílulas de Categoria Rápida */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryScroll}
-        >
-          {DEFAULT_CATEGORIES.map((cat) => {
-            const isSelected = category === cat;
-            return (
-              <TouchableOpacity
-                key={cat}
-                style={[
-                  styles.categoryChip,
-                  {
-                    backgroundColor: isSelected
-                      ? '#3870d8'
-                      : isDark
-                      ? '#1e293b'
-                      : '#f1f5f9',
-                  },
-                ]}
-                onPress={() => setCategory(cat)}
-              >
-                <Text
-                  style={[
-                    styles.categoryChipText,
-                    { color: isSelected ? '#ffffff' : theme.subtext },
-                  ]}
-                >
-                  {cat}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-
-        {/* Botões Salvar / Cancelar */}
-        <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+        {/* Botões de Ação */}
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
           {editingId && (
             <TouchableOpacity
               style={[styles.btnAction, { flex: 1, backgroundColor: '#64748b' }]}
@@ -249,7 +315,7 @@ export default function ExpensesScreen() {
         </View>
       </View>
 
-      {/* --- CAMPO DE BUSCA --- */}
+      {/* --- BUSCA --- */}
       <View style={styles.searchContainer}>
         <View style={[styles.searchBox, { backgroundColor: theme.card }]}>
           <Feather name="search" size={18} color={theme.subtext} />
@@ -268,7 +334,7 @@ export default function ExpensesScreen() {
         </View>
       </View>
 
-      {/* --- LISTAGEM DE MOVIMENTAÇÕES --- */}
+      {/* --- HISTÓRICO --- */}
       <ScrollView
         contentContainerStyle={styles.scrollList}
         showsVerticalScrollIndicator={false}
@@ -352,6 +418,101 @@ export default function ExpensesScreen() {
           })
         )}
       </ScrollView>
+
+      {/* --- MODAL DE GERENCIAMENTO DE CATEGORIAS --- */}
+      <Modal
+        visible={isCategoryModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsCategoryModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { backgroundColor: theme.card }]}>
+            <View style={styles.modalHeader}>
+              <View style={[styles.modalIconBox, { backgroundColor: 'rgba(56, 112, 216, 0.15)' }]}>
+                <MaterialIcons name="bookmarks" size={24} color="#3870d8" />
+              </View>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>
+                Gerenciar Categorias
+              </Text>
+              <Text style={[styles.modalSubtitle, { color: theme.subtext }]}>
+                Adicione, reordene e remova categorias da sua lista.
+              </Text>
+            </View>
+
+            {/* Input para nova categoria */}
+            <View style={styles.modalAddRow}>
+              <TextInput
+                style={[
+                  styles.input,
+                  { flex: 1, backgroundColor: theme.input, color: theme.text },
+                ]}
+                placeholder="Nova categoria..."
+                placeholderTextColor={theme.subtext}
+                value={newCategoryName}
+                onChangeText={setNewCategoryName}
+              />
+              <TouchableOpacity
+                style={[styles.modalAddBtn, { backgroundColor: '#3870d8' }]}
+                onPress={handleAddCategory}
+              >
+                <MaterialIcons name="add" size={22} color="#ffffff" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Lista ordenada com botões de movimentação e exclusão */}
+            <ScrollView style={styles.modalCategoriesList} showsVerticalScrollIndicator={false}>
+              {categories.map((cat, index) => (
+                <View
+                  key={cat}
+                  style={[
+                    styles.modalCatRow,
+                    { borderBottomColor: theme.border },
+                  ]}
+                >
+                  <Text style={[styles.modalCatName, { color: theme.text }]}>
+                    {cat}
+                  </Text>
+
+                  <View style={styles.modalCatActions}>
+                    <TouchableOpacity
+                      disabled={index === 0}
+                      onPress={() => handleMoveCategory(cat, -1)}
+                      style={[styles.orderBtn, index === 0 && { opacity: 0.25 }]}
+                    >
+                      <MaterialIcons name="arrow-upward" size={18} color={theme.text} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      disabled={index === categories.length - 1}
+                      onPress={() => handleMoveCategory(cat, 1)}
+                      style={[styles.orderBtn, index === categories.length - 1 && { opacity: 0.25 }]}
+                    >
+                      <MaterialIcons name="arrow-downward" size={18} color={theme.text} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() => handleDeleteCategory(cat)}
+                      style={[styles.orderBtn, { marginLeft: 4 }]}
+                    >
+                      <MaterialIcons name="delete" size={18} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={[styles.modalCloseBtn, { backgroundColor: theme.input }]}
+              onPress={() => setIsCategoryModalVisible(false)}
+            >
+              <Text style={[styles.modalCloseBtnText, { color: theme.text }]}>
+                Concluir
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

@@ -29,6 +29,11 @@ export const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
   },
+  headerActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   headerIconBtn: {
     width: 38,
     height: 38,
@@ -71,7 +76,7 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
-  // --- FORMULÁRIO DE LANÇAMENTO ---
+  // --- FORMULÁRIO ---
   formCard: {
     marginHorizontal: 16,
     marginTop: -12,
@@ -112,25 +117,68 @@ export const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 10,
   },
-  input: {
-    height: 44,
+  fieldMiniLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    marginBottom: 2,
+  },
+  categoryTrigger: {
+    flex: 1.3,
+    minHeight: 54,
     borderRadius: 12,
     paddingHorizontal: 12,
-    fontSize: 14,
+    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
   },
-  categoryScroll: {
+  categoryTriggerText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  valueInputBox: {
+    flex: 1.1,
+    minHeight: 54,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  inputInner: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    padding: 0,
+    margin: 0,
+    height: Platform.OS === 'android' ? 28 : 24,
+    textAlignVertical: 'center',
+  },
+  categoryDropdownContainer: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 8,
+    marginBottom: 10,
+  },
+  categoryDropdownScroll: {
     gap: 6,
-    paddingVertical: 4,
-    marginBottom: 2,
+    paddingVertical: 2,
   },
   categoryChip: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingVertical: 7,
+    borderRadius: 18,
   },
   categoryChipText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  input: {
+    height: 48,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    fontSize: 14,
   },
   btnAction: {
     height: 44,
@@ -249,5 +297,97 @@ export const styles = StyleSheet.create({
   txActions: {
     flexDirection: 'row',
     gap: 10,
+  },
+
+  // --- MODAL DE GERENCIAMENTO ---
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '80%',
+    borderRadius: 22,
+    padding: 20,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalIconBox: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: 'bold',
+  },
+  modalSubtitle: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 3,
+  },
+  modalAddRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 14,
+  },
+  modalAddBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCategoriesList: {
+    maxHeight: 220,
+    marginBottom: 14,
+  },
+  modalCatRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+  },
+  modalCatName: {
+    fontSize: 14,
+    fontWeight: '600',
+    flex: 1,
+  },
+  modalCatActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  orderBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseBtn: {
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseBtnText: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });

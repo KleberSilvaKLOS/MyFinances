@@ -1,10 +1,10 @@
 /**
  * ============================================================================
- * TELA DE AUTENTICAÇÃO (Google, Facebook e E-mail)
+ * TELA DE AUTENTICAÇÃO (Google & E-mail com Firebase Auth)
  * ============================================================================
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,14 +17,22 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, Feather, FontAwesome5 } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithCredential,
 } from 'firebase/auth';
 
 import { auth } from '../../config/firebase';
 import { useTheme } from '../../context/ThemeContext';
 import { styles } from './styles';
+
+WebBrowser.maybeCompleteAuthSession();
+
+const GOOGLE_CLIENT_ID = '101659990601-7s45s396coaki0udt2u9out69s2h98tg.apps.googleusercontent.com';
 
 export default function LoginScreen() {
   const { theme, isDark } = useTheme();
@@ -34,6 +42,34 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+
+  // Hook de autenticação OAuth do Google
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    clientId: GOOGLE_CLIENT_ID,
+    webClientId: GOOGLE_CLIENT_ID,
+    androidClientId: GOOGLE_CLIENT_ID,
+    iosClientId: GOOGLE_CLIENT_ID,
+  });
+
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+
+      if (id_token) {
+        setLoading(true);
+        const credential = GoogleAuthProvider.credential(id_token);
+
+        signInWithCredential(auth, credential)
+          .catch((error) => {
+            console.log('Erro ao autenticar com Google no Firebase:', error);
+            Alert.alert('Falha no Login', 'Não foi possível concluir o login com o Google.');
+          })
+          .finally(() => {
+            setLoading(false);
+          });
+      }
+    }
+  }, [response]);
 
   const handleEmailAuth = async () => {
     const cleanEmail = email.trim();
@@ -48,28 +84,65 @@ export default function LoginScreen() {
     try {
       if (isRegistering) {
         await createUserWithEmailAndPassword(auth, cleanEmail, cleanPassword);
-        Alert.alert('Conta criada', 'Cadastro realizado com sucesso!');
+        Alert.alert('Sucesso', 'Conta criada com sucesso!');
       } else {
         await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
       }
     } catch (error: any) {
-      let msg = 'Não foi possível completar a operação.';
-      if (error.code === 'auth/invalid-email') msg = 'Formato de e-mail inválido.';
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        msg = 'E-mail ou senha incorretos.';
+      console.log('Erro Firebase Auth:', error.code, error.message);
+
+      // Se tentar logar com credenciais não cadastradas, oferece criar a conta na hora
+      if (
+        error.code === 'auth/invalid-credential' ||
+        error.code === 'auth/user-not-found'
+      ) {
+        if (!isRegistering) {
+          Alert.alert(
+            'Conta não encontrada',
+            'Não encontramos uma conta cadastrada com esses dados. Deseja criar sua conta agora?',
+            [
+              { text: 'Cancelar', style: 'cancel' },
+              {
+                text: 'Criar Conta',
+                onPress: async () => {
+                  try {
+                    setLoading(true);
+                    await createUserWithEmailAndPassword(auth, cleanEmail, cleanPassword);
+                    Alert.alert('Sucesso', 'Conta criada com sucesso!');
+                  } catch (createErr: any) {
+                    Alert.alert('Erro ao criar conta', createErr.message);
+                  } finally {
+                    setLoading(false);
+                  }
+                },
+              },
+            ]
+          );
+          return;
+        }
       }
-      if (error.code === 'auth/email-already-in-use') msg = 'Este e-mail já está em uso.';
-      if (error.code === 'auth/weak-password') msg = 'A senha deve conter no mínimo 6 dígitos.';
-      Alert.alert('Erro de Acesso', msg);
+
+      let msg = 'Não foi possível completar a operação.';
+      if (error.code === 'auth/operation-not-allowed') {
+        msg = 'O login por E-mail/Senha precisa ser ativado no Firebase Console (Authentication > Sign-in method).';
+      } else if (error.code === 'auth/invalid-email') {
+        msg = 'Formato de e-mail inválido.';
+      } else if (error.code === 'auth/email-already-in-use') {
+        msg = 'Este e-mail já está cadastrado. Alterne para o modo de login.';
+      } else if (error.code === 'auth/weak-password') {
+        msg = 'A senha deve conter pelo menos 6 caracteres.';
+      }
+
+      Alert.alert('Atenção', msg);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSocialLoginPlaceholder = (provider: string) => {
+  const handleFacebookPlaceholder = () => {
     Alert.alert(
-      `Login com ${provider}`,
-      `O fluxo nativo de autenticação com o ${provider} usa a chave do Firebase criada no projeto my-finances-app-abc25.`
+      'Login com Facebook',
+      'Para habilitar o Facebook Login, configure o App ID no Meta for Developers e adicione ao Firebase.'
     );
   };
 
@@ -87,7 +160,7 @@ export default function LoginScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* CABEÇALHO COM LOGOTIPO */}
+        {/* CABEÇALHO */}
         <View style={styles.headerBox}>
           <View style={styles.logoBadge}>
             <Ionicons name="wallet" size={32} color="#ffffff" />
@@ -98,7 +171,7 @@ export default function LoginScreen() {
           </Text>
         </View>
 
-        {/* CARD DO FORMULÁRIO */}
+        {/* CARD FORMULÁRIO */}
         <View style={[styles.cardForm, { backgroundColor: theme.card }]}>
           {/* E-mail */}
           <View style={styles.inputGroup}>
@@ -140,7 +213,7 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          {/* Botão Entrar/Cadastrar */}
+          {/* Botão Principal */}
           <TouchableOpacity
             style={styles.btnPrimary}
             onPress={handleEmailAuth}
@@ -155,7 +228,7 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
-          {/* Alternar entre login e cadastro */}
+          {/* Alternar Cadastro / Login */}
           <TouchableOpacity
             onPress={() => setIsRegistering(!isRegistering)}
             style={{ marginTop: 14, alignItems: 'center' }}
@@ -177,13 +250,15 @@ export default function LoginScreen() {
 
         {/* BOTÕES SOCIAIS */}
         <View style={styles.socialButtonsCol}>
-          {/* Google */}
+          {/* Botão Google */}
           <TouchableOpacity
             style={[
               styles.socialButton,
               { backgroundColor: theme.card, borderColor: theme.border },
+              (!request || loading) && { opacity: 0.7 },
             ]}
-            onPress={() => handleSocialLoginPlaceholder('Google')}
+            onPress={() => promptAsync()}
+            disabled={!request || loading}
           >
             <FontAwesome5 name="google" size={18} color="#ea4335" />
             <Text style={[styles.socialButtonText, { color: theme.text }]}>
@@ -191,13 +266,13 @@ export default function LoginScreen() {
             </Text>
           </TouchableOpacity>
 
-          {/* Facebook */}
+          {/* Botão Facebook */}
           <TouchableOpacity
             style={[
               styles.socialButton,
               { backgroundColor: theme.card, borderColor: theme.border },
             ]}
-            onPress={() => handleSocialLoginPlaceholder('Facebook')}
+            onPress={handleFacebookPlaceholder}
           >
             <FontAwesome5 name="facebook" size={18} color="#1877f2" />
             <Text style={[styles.socialButtonText, { color: theme.text }]}>

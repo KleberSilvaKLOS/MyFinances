@@ -1,8 +1,9 @@
 {
   "expo": {
     "name": "MyFinance",
-    "slug": "account-control",
-    "version": "1.0.5",
+    "slug": "my-finances",
+    "scheme": "myfinances",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -31,6 +32,9 @@
       "eas": {
         "projectId": "77396395-7048-4e02-bd2f-b5bb18c9b90e"
       }
-    }
+    },
+    "plugins": [
+      "expo-web-browser"
+    ]
   }
 }

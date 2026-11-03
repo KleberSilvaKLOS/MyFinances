@@ -1,7 +1,7 @@
 /**
  * ============================================================================
  * HOOK CUSTOMIZADO: useExpenses
- * Gerencia o CRUD de lançamentos (receitas e despesas) e sincroniza no AsyncStorage.
+ * Gerencia lançamentos, máscara monetária BRL em tempo real e categorias.
  * ============================================================================
  */
 
@@ -11,15 +11,47 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 
 import { useTheme } from '../../context/ThemeContext';
-import { parseCurrencyInput, formatPrivateValue } from '../../utils/formatters';
+import { formatPrivateValue } from '../../utils/formatters';
 import { Transaction } from '../../@types/finance';
+
+export const DEFAULT_CATEGORIES = [
+  'Alimentação',
+  'Moradia',
+  'Transporte',
+  'Lazer',
+  'Saúde',
+  'Educação',
+  'Outros',
+];
+
+// Formata texto bruto de dígitos em moeda brasileira (ex: 125000 -> R$ 1.250,00)
+export function formatCurrencyBRL(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return '';
+  const amount = Number(digits) / 100;
+  return amount.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+}
+
+// Converte a string formatada em número puro para salvar no banco
+export function parseCurrencyBRL(formatted: string): number {
+  const digits = formatted.replace(/\D/g, '');
+  return digits ? Number(digits) / 100 : 0;
+}
 
 export function useExpenses() {
   const { theme, isDark, isVisible, toggleVisibility } = useTheme();
 
-  // Estados principais
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [search, setSearch] = useState<string>('');
+
+  // Categorias
+  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
+  const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   // Formulário
   const [description, setDescription] = useState<string>('');
@@ -28,29 +60,37 @@ export function useExpenses() {
   const [category, setCategory] = useState<string>('Alimentação');
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  /**
-   * Carrega os lançamentos salvos no AsyncStorage.
-   */
-  const loadTransactions = async () => {
+  const loadInitialData = async () => {
     try {
-      const stored = await AsyncStorage.getItem('@myfinance:transactions');
-      if (stored) {
-        setTransactions(JSON.parse(stored));
+      const [storedTrans, storedCats] = await Promise.all([
+        AsyncStorage.getItem('@myfinance:transactions'),
+        AsyncStorage.getItem('@myfinance:categories'),
+      ]);
+
+      if (storedTrans) {
+        setTransactions(JSON.parse(storedTrans));
+      }
+
+      if (storedCats) {
+        const parsed = JSON.parse(storedCats);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setCategories(parsed);
+          setCategory((prev) => (parsed.includes(prev) ? prev : parsed[0]));
+        }
+      } else {
+        setCategories(DEFAULT_CATEGORIES);
       }
     } catch (error) {
-      console.log('Erro ao carregar transações:', error);
+      console.log('Erro ao carregar dados:', error);
     }
   };
 
   useFocusEffect(
     useCallback(() => {
-      loadTransactions();
+      loadInitialData();
     }, [])
   );
 
-  /**
-   * Salva a lista de lançamentos no AsyncStorage e atualiza o estado local.
-   */
   const saveTransactions = async (list: Transaction[]) => {
     try {
       await AsyncStorage.setItem('@myfinance:transactions', JSON.stringify(list));
@@ -60,15 +100,91 @@ export function useExpenses() {
     }
   };
 
-  /**
-   * Adiciona ou edita um lançamento, compatibilizando 'value' e 'amount'.
-   */
+  // Atualiza o valor aplicando a máscara dinâmica conforme o usuário digita
+  const handleValueChange = (text: string) => {
+    setValue(formatCurrencyBRL(text));
+  };
+
+  const handleAddCategory = async () => {
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) {
+      Alert.alert('Atenção', 'Informe o nome da categoria.');
+      return;
+    }
+
+    if (categories.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
+      Alert.alert('Atenção', 'Esta categoria já existe.');
+      return;
+    }
+
+    const updated = [...categories, trimmed];
+    try {
+      await AsyncStorage.setItem('@myfinance:categories', JSON.stringify(updated));
+      setCategories(updated);
+      setCategory(trimmed);
+      setNewCategoryName('');
+      Keyboard.dismiss();
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível salvar a categoria.');
+    }
+  };
+
+  const handleMoveCategory = async (catName: string, direction: -1 | 1) => {
+    const currentIndex = categories.indexOf(catName);
+    if (currentIndex === -1) return;
+
+    const targetIndex = currentIndex + direction;
+    if (targetIndex < 0 || targetIndex >= categories.length) return;
+
+    const reordered = [...categories];
+    const [movedItem] = reordered.splice(currentIndex, 1);
+    reordered.splice(targetIndex, 0, movedItem);
+
+    try {
+      await AsyncStorage.setItem('@myfinance:categories', JSON.stringify(reordered));
+      setCategories(reordered);
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível reorganizar a categoria.');
+    }
+  };
+
+  const handleDeleteCategory = (catName: string) => {
+    if (categories.length <= 1) {
+      Alert.alert('Atenção', 'Você deve manter pelo menos uma categoria cadastrada.');
+      return;
+    }
+
+    Alert.alert(
+      'Excluir Categoria',
+      `Deseja remover "${catName}"? Os lançamentos antigos continuarão com ela registrada.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            const updated = categories.filter((c) => c !== catName);
+            try {
+              await AsyncStorage.setItem('@myfinance:categories', JSON.stringify(updated));
+              setCategories(updated);
+              if (category === catName) {
+                setCategory(updated[0]);
+              }
+            } catch (error) {
+              Alert.alert('Erro', 'Não foi possível excluir a categoria.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleSaveTransaction = () => {
     const trimmedDesc = description.trim();
-    const numericValue = parseCurrencyInput(value);
+    const numericValue = parseCurrencyBRL(value);
 
     if (!trimmedDesc || numericValue <= 0) {
-      Alert.alert('Atenção', 'Informe uma descrição e um valor maior que zero.');
+      Alert.alert('Atenção', 'Informe a descrição e um valor maior que zero.');
       return;
     }
 
@@ -82,7 +198,7 @@ export function useExpenses() {
     if (editingId) {
       updatedList = transactions.map((item) => {
         if (item.id === editingId) {
-          const updatedItem = {
+          return {
             ...item,
             description: trimmedDesc,
             value: numericValue,
@@ -90,7 +206,6 @@ export function useExpenses() {
             type,
             category: category.trim() || 'Outros',
           } as unknown as Transaction;
-          return updatedItem;
         }
         return item;
       });
@@ -110,22 +225,25 @@ export function useExpenses() {
     }
 
     saveTransactions(updatedList);
-
-    // Limpa formulário
     setDescription('');
     setValue('');
-    setCategory('Alimentação');
     setType('expense');
+    setIsCategoryPickerOpen(false);
     Keyboard.dismiss();
   };
 
   const handleStartEdit = (item: Transaction) => {
-    const val = item.value ?? (item as any).amount ?? 0;
+    const val = Number(item.value ?? (item as any).amount ?? 0);
     setEditingId(item.id);
     setDescription(item.description);
-    setValue(String(val));
+    setValue(
+      val > 0
+        ? val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+        : ''
+    );
     setType(item.type);
     setCategory(item.category || 'Alimentação');
+    setIsCategoryPickerOpen(false);
   };
 
   const handleCancelEdit = () => {
@@ -133,7 +251,7 @@ export function useExpenses() {
     setDescription('');
     setValue('');
     setType('expense');
-    setCategory('Alimentação');
+    setIsCategoryPickerOpen(false);
     Keyboard.dismiss();
   };
 
@@ -152,9 +270,6 @@ export function useExpenses() {
     ]);
   };
 
-  /**
-   * Filtra lançamentos pela busca de texto.
-   */
   const filteredTransactions = useMemo(() => {
     if (!search.trim()) return transactions;
     const term = search.toLowerCase();
@@ -165,9 +280,6 @@ export function useExpenses() {
     );
   }, [transactions, search]);
 
-  /**
-   * Totais de entradas, saídas e saldo líquido.
-   */
   const { totalIncome, totalExpense, balance } = useMemo(() => {
     let income = 0;
     let expense = 0;
@@ -195,14 +307,23 @@ export function useExpenses() {
     isDark,
     isVisible,
     toggleVisibility,
-    transactions,
     filteredTransactions,
     search,
     setSearch,
+    categories,
+    isCategoryModalVisible,
+    setIsCategoryModalVisible,
+    isCategoryPickerOpen,
+    setIsCategoryPickerOpen,
+    newCategoryName,
+    setNewCategoryName,
+    handleAddCategory,
+    handleMoveCategory,
+    handleDeleteCategory,
     description,
     setDescription,
     value,
-    setValue,
+    handleValueChange,
     type,
     setType,
     category,
